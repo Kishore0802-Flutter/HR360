@@ -1,0 +1,5 @@
+# Copy to key.properties and fill your own values. Never commit secrets.
+storePassword=REPLACE
+keyPassword=REPLACE
+keyAlias=upload
+storeFile=/absolute/path/to/upload-keystore.jks

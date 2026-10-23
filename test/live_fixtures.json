@@ -1,0 +1,1779 @@
+{
+ "/auth/me": {
+  "success": true,
+  "data": {
+   "id": "efe247ea-17b4-40e6-a307-35a2edd9655a",
+   "email": "admin@giraffai.in",
+   "theme": "midnight-blue",
+   "preferences": {},
+   "lastLoginAt": "2026-10-22T16:00:54.440Z",
+   "roles": [
+    {
+     "id": "9d2ce184-29dd-410b-aa19-8abe47c7c966",
+     "code": "SUPER_ADMIN",
+     "name": "Super Admin",
+     "scope": "ALL"
+    }
+   ],
+   "permissions": [
+    "attendance:create",
+    "attendance:export",
+    "attendance:review",
+    "attendance:view",
+    "audit:view",
+    "calendar:view",
+    "departments:manage",
+    "departments:view",
+    "designations:manage",
+    "designations:view",
+    "employees:create",
+    "employees:delete",
+    "employees:edit",
+    "employees:export",
+    "employees:view",
+    "holidays:manage",
+    "holidays:view",
+    "hrms_dashboard:view",
+    "hrms_reports:export",
+    "hrms_reports:view",
+    "issues:create",
+    "issues:edit",
+    "issues:export",
+    "issues:reopen",
+    "issues:resolve",
+    "issues:view",
+    "leave:approve",
+    "leave:create",
+    "leave:export",
+    "leave:manage",
+    "leave:view",
+    "leave_policies:manage",
+    "leave_policies:view",
+    "manager_mappings:manage",
+    "manager_mappings:view",
+    "outlets:manage",
+    "outlets:view",
+    "projects:archive",
+    "projects:create",
+    "projects:edit",
+    "projects:view",
+    "regularisations:approve",
+    "regularisations:create",
+    "regularisations:view",
+    "roles:manage",
+    "roles:view",
+    "schedules:manage",
+    "schedules:view",
+    "settings:manage",
+    "settings:view",
+    "task_categories:manage",
+    "task_categories:view",
+    "task_dashboard:view",
+    "task_reports:export",
+    "task_reports:view",
+    "tasks:assign",
+    "tasks:create",
+    "tasks:delete",
+    "tasks:edit",
+    "tasks:export",
+    "tasks:reopen",
+    "tasks:view",
+    "teams:manage",
+    "teams:view"
+   ],
+   "scope": "ALL",
+   "employee": {
+    "id": "a3c1d986-335d-43d0-b52f-c3cc7832739b",
+    "employeeCode": "ADM001",
+    "firstName": "System",
+    "lastName": "Administrator",
+    "fullName": "System Administrator",
+    "email": "admin@giraffai.in",
+    "department": {
+     "id": "474a8d8f-3a6c-4ee4-ba72-78401295caf7",
+     "name": "Human Resources"
+    },
+    "designation": {
+     "id": "4984cbab-f225-4662-a56b-e7613a7ce0da",
+     "title": "HR Executive"
+    },
+    "manager": null
+   },
+   "company": {
+    "name": "Acme Corporation",
+    "theme": "warm-sand",
+    "timezone": "Asia/Kolkata",
+    "workWeek": [
+     1,
+     2,
+     3,
+     4,
+     5
+    ]
+   }
+  }
+ },
+ "/reports/hrms/dashboard": {
+  "success": true,
+  "data": {
+   "scope": "ALL",
+   "from": "2026-10-01",
+   "to": "2026-10-22",
+   "headcount": {
+    "total": 10,
+    "active": 10,
+    "inactive": 0,
+    "newJoiners": 1,
+    "byDepartment": [
+     {
+      "name": "Engineering",
+      "count": 4
+     },
+     {
+      "name": "Operations",
+      "count": 4
+     },
+     {
+      "name": "Human Resources",
+      "count": 1
+     },
+     {
+      "name": "admin",
+      "count": 1
+     }
+    ],
+    "byDesignation": [
+     {
+      "name": "Operations Executive",
+      "count": 3
+     },
+     {
+      "name": "Software Engineer",
+      "count": 3
+     },
+     {
+      "name": "HR Executive",
+      "count": 1
+     },
+     {
+      "name": "Manager",
+      "count": 1
+     },
+     {
+      "name": "Store Manager",
+      "count": 1
+     },
+     {
+      "name": "manager",
+      "count": 1
+     }
+    ]
+   },
+   "attendanceToday": {
+    "total": 10,
+    "present": 2,
+    "checkedIn": 0,
+    "notCheckedIn": 8,
+    "absent": 0,
+    "onLeave": 0,
+    "late": 2,
+    "nonWorking": 0
+   },
+   "workingHours": {
+    "totalMinutes": 24071,
+    "averageMinutes": 472,
+    "overtimeMinutes": 0,
+    "trend": [
+     {
+      "date": "2026-10-01",
+      "totalMinutes": 0,
+      "employees": 0,
+      "averageMinutes": 0,
+      "late": 0
+     },
+     {
+      "date": "2026-10-02",
+      "totalMinutes": 0,
+      "employees": 0,
+      "averageMinutes": 0,
+      "late": 0
+     },
+     {
+      "date": "2026-10-03",
+      "totalMinutes": 0,
+      "employees": 0,
+      "averageMinutes": 0,
+      "late": 0
+     },
+     {
+      "date": "2026-10-04",
+      "totalMinutes": 0,
+      "employees": 0,
+      "averageMinutes": 0,
+      "late": 0
+     },
+     {
+      "date": "2026-10-05",
+      "totalMinutes": 0,
+      "employees": 0,
+      "averageMinutes": 0,
+      "late": 0
+     },
+     {
+      "date": "2026-10-06",
+      "totalMinutes": 0,
+      "employees": 0,
+      "averageMinutes": 0,
+      "late": 0
+     },
+     {
+      "date": "2026-10-07",
+      "totalMinutes": 0,
+      "employees": 0,
+      "averageMinutes": 0,
+      "late": 0
+     },
+     {
+      "date": "2026-10-08",
+      "totalMinutes": 2501,
+      "employees": 5,
+      "averageMinutes": 500,
+      "late": 0
+     },
+     {
+      "date": "2026-10-09",
+      "totalMinutes": 2496,
+      "employees": 5,
+      "averageMinutes": 499,
+      "late": 0
+     },
+     {
+      "date": "2026-10-10",
+      "totalMinutes": 0,
+      "employees": 0,
+      "averageMinutes": 0,
+      "late": 0
+     },
+     {
+      "date": "2026-10-11",
+      "totalMinutes": 0,
+      "employees": 0,
+      "averageMinutes": 0,
+      "late": 0
+     },
+     {
+      "date": "2026-10-12",
+      "totalMinutes": 2491,
+      "employees": 5,
+      "averageMinutes": 498,
+      "late": 0
+     },
+     {
+      "date": "2026-10-13",
+      "totalMinutes": 2486,
+      "employees": 5,
+      "averageMinutes": 497,
+      "late": 0
+     },
+     {
+      "date": "2026-10-14",
+      "totalMinutes": 2481,
+      "employees": 5,
+      "averageMinutes": 496,
+      "late": 0
+     },
+     {
+      "date": "2026-10-15",
+      "totalMinutes": 2476,
+      "employees": 5,
+      "averageMinutes": 495,
+      "late": 0
+     },
+     {
+      "date": "2026-10-16",
+      "totalMinutes": 2471,
+      "employees": 5,
+      "averageMinutes": 494,
+      "late": 0
+     },
+     {
+      "date": "2026-10-17",
+      "totalMinutes": 0,
+      "employees": 0,
+      "averageMinutes": 0,
+      "late": 0
+     },
+     {
+      "date": "2026-10-18",
+      "totalMinutes": 0,
+      "employees": 0,
+      "averageMinutes": 0,
+      "late": 0
+     },
+     {
+      "date": "2026-10-19",
+      "totalMinutes": 1972,
+      "employees": 4,
+      "averageMinutes": 493,
+      "late": 0
+     },
+     {
+      "date": "2026-10-20",
+      "totalMinutes": 2209,
+      "employees": 5,
+      "averageMinutes": 442,
+      "late": 0
+     },
+     {
+      "date": "2026-10-21",
+      "totalMinutes": 2456,
+      "employees": 5,
+      "averageMinutes": 491,
+      "late": 0
+     },
+     {
+      "date": "2026-10-22",
+      "totalMinutes": 32,
+      "employees": 2,
+      "averageMinutes": 16,
+      "late": 2
+     }
+    ]
+   },
+   "exceptions": {
+    "missingCheckout": 1,
+    "late": 2,
+    "underHours": 0,
+    "pendingEvidenceReview": 0
+   },
+   "leave": {
+    "pending": 2,
+    "approved": 0,
+    "rejected": 0,
+    "approvedDays": 0,
+    "byType": [],
+    "upcoming": [
+     {
+      "id": "88384c8e-dda0-4b9e-a7a0-edc437cdd67f",
+      "startDate": "2026-10-27",
+      "endDate": "2026-10-27",
+      "days": 1,
+      "status": "PENDING",
+      "leaveType": "Casual Leave",
+      "employeeId": "ffe7154f-ba0e-4988-84a5-320bbd6bac53",
+      "employeeName": "Arun Kumar"
+     }
+    ]
+   },
+   "regularisation": {
+    "pending": 0,
+    "approved": 0,
+    "rejected": 0
+   }
+  }
+ },
+ "/attendance/status": {
+  "success": true,
+  "data": {
+   "workDate": "2026-10-22",
+   "timezone": "Asia/Kolkata",
+   "serverTime": "2026-10-22T16:00:56.969Z",
+   "isCheckedIn": false,
+   "openSince": null,
+   "nextAction": "CHECK_IN",
+   "canCheckIn": true,
+   "sessionsToday": 1,
+   "today": {
+    "date": "2026-10-22",
+    "status": "PRESENT",
+    "leaveType": null,
+    "holiday": null,
+    "firstInAt": "2026-10-22T12:33:32.842Z",
+    "lastOutAt": "2026-10-22T13:05:29.352Z",
+    "sessionsCount": 1,
+    "completedSessions": 1,
+    "grossMinutes": 31,
+    "netMinutes": 31,
+    "breakMinutes": 0,
+    "overtimeMinutes": 0,
+    "isLate": true,
+    "lateMinutes": 513,
+    "hasOpenSession": false,
+    "exceptions": [
+     "LATE_ARRIVAL"
+    ],
+    "adjusted": false
+   },
+   "events": [
+    {
+     "id": "a4af78f7-37ed-40f5-a2eb-4cffd3f5fd1c",
+     "employeeId": "a3c1d986-335d-43d0-b52f-c3cc7832739b",
+     "eventType": "CHECK_IN",
+     "serverTime": "2026-10-22T12:33:32.842Z",
+     "workDate": "2026-10-22",
+     "timezone": "Asia/Kolkata",
+     "deviceTime": "2026-10-22T12:33:31.854Z",
+     "latitude": 12.94433211629427,
+     "longitude": 80.2361679184771,
+     "accuracy": 52,
+     "source": "WEB",
+     "flags": [],
+     "flagReasons": [],
+     "reviewStatus": "NOT_REQUIRED",
+     "reviewComment": null,
+     "reviewedAt": null,
+     "hasPhoto": true,
+     "photo": null
+    },
+    {
+     "id": "71515b94-426e-456b-a275-3b19be9b56ba",
+     "employeeId": "a3c1d986-335d-43d0-b52f-c3cc7832739b",
+     "eventType": "CHECK_OUT",
+     "serverTime": "2026-10-22T13:05:29.352Z",
+     "workDate": "2026-10-22",
+     "timezone": "Asia/Kolkata",
+     "deviceTime": "2026-10-22T13:05:28.640Z",
+     "latitude": 12.94427878522402,
+     "longitude": 80.23621509048563,
+     "accuracy": 35,
+     "source": "WEB",
+     "flags": [],
+     "flagReasons": [],
+     "reviewStatus": "NOT_REQUIRED",
+     "reviewComment": null,
+     "reviewedAt": null,
+     "hasPhoto": true,
+     "photo": null
+    }
+   ],
+   "pendingMissingCheckout": null,
+   "requirements": {
+    "photo": true,
+    "location": true,
+    "accuracyThresholdMeters": 200,
+    "lowAccuracyAction": "FLAG",
+    "geofenceEnabled": false,
+    "geofenceAction": "FLAG",
+    "sites": [],
+    "allowMultipleSessions": true,
+    "maxSessionsPerDay": 6
+   }
+  }
+ },
+ "/notifications/unread-count": {
+  "success": true,
+  "data": {
+   "unreadCount": 0
+  }
+ },
+ "/reports/tasks/dashboard": {
+  "success": true,
+  "data": {
+   "scope": "ALL",
+   "from": "2026-09-23",
+   "to": "2026-10-22",
+   "counts": {
+    "total": 32,
+    "todo": 32,
+    "inProgress": 0,
+    "completed": 0,
+    "overdue": 3,
+    "dueSoon": 3,
+    "atRisk": 3,
+    "unassigned": 0,
+    "completionPercent": 0
+   },
+   "trend": [
+    {
+     "period": "2026-10-22",
+     "created": 32,
+     "completed": 0
+    }
+   ],
+   "byPriority": [
+    {
+     "key": "HIGH",
+     "total": 28,
+     "completed": 0,
+     "overdue": 1
+    },
+    {
+     "key": "MEDIUM",
+     "total": 2,
+     "completed": 0,
+     "overdue": 1
+    },
+    {
+     "key": "URGENT",
+     "total": 1,
+     "completed": 0,
+     "overdue": 1
+    },
+    {
+     "key": "LOW",
+     "total": 1,
+     "completed": 0,
+     "overdue": 0
+    }
+   ],
+   "byType": [
+    {
+     "key": "OUTLET",
+     "total": 28,
+     "completed": 0,
+     "overdue": 1
+    },
+    {
+     "key": "GENERAL",
+     "total": 4,
+     "completed": 0,
+     "overdue": 2
+    }
+   ],
+   "byProject": [
+    {
+     "key": "Retail Excellence",
+     "total": 28,
+     "completed": 0,
+     "overdue": 1
+    },
+    {
+     "key": "HRMS Rollout",
+     "total": 4,
+     "completed": 0,
+     "overdue": 2
+    }
+   ],
+   "byTeam": [
+    {
+     "key": "No team",
+     "total": 31,
+     "completed": 0,
+     "overdue": 3
+    },
+    {
+     "key": "Platform Team",
+     "total": 1,
+     "completed": 0,
+     "overdue": 0
+    }
+   ],
+   "issues": {
+    "total": 2,
+    "open": 1,
+    "inProgress": 1,
+    "resolved": 0,
+    "highPriorityOpen": 1
+   }
+  }
+ },
+ "/tasks": {
+  "success": true,
+  "data": {
+   "items": [
+    {
+     "id": "548f2eed-b2b0-4a1a-a1f6-8fbabe4d3359",
+     "code": "TSK-00136",
+     "title": "Store opening checklist",
+     "description": "Complete before opening the store to customers.",
+     "taskType": "OUTLET",
+     "status": "TODO",
+     "priority": "HIGH",
+     "startAt": "2026-11-21T03:30:00.000Z",
+     "dueAt": "2026-11-21T04:00:00.000Z",
+     "timezone": "Asia/Kolkata",
+     "durationMinutes": 30,
+     "isOverdue": false,
+     "assignmentMode": "SINGLE",
+     "project": {
+      "id": "aeeda2fb-a590-470f-86b8-6fb42b6eec81",
+      "code": "DEMO-RETAIL",
+      "name": "Retail Excellence",
+      "color": "#10b981",
+      "status": "ACTIVE"
+     },
+     "outlet": {
+      "id": "01cdd85a-1ad5-4ef2-82df-50c7d6361f5a",
+      "code": "DEMO-ANNA",
+      "name": "Anna Nagar Store"
+     },
+     "category": {
+      "id": "7e2dfc6c-5a85-44e9-8337-c27d0f871052",
+      "name": "Checklist"
+     },
+     "team": null,
+     "creator": {
+      "id": "42bc8eb5-bd7d-4f71-960f-7eac570e6fd7",
+      "fullName": "Karthik Subramanian"
+     },
+     "assignees": [
+      {
+       "id": "ba8af690-a857-42e8-b424-75aa91e4197c",
+       "fullName": "Suresh Babu",
+       "employeeCode": "DEMO-E05"
+      }
+     ],
+     "parentTaskId": null,
+     "scheduleId": "42f02342-a548-4094-869d-ea8645c5a314",
+     "occurrenceKey": "2026-11-21",
+     "isException": false,
+     "isMandatory": false,
+     "progressPercent": null,
+     "subtaskCount": 4,
+     "subtaskCompleted": 0,
+     "completedAt": null,
+     "reopenCount": 0,
+     "templateId": "81f83896-bc5f-4fd0-8f14-942634717c20",
+     "createdAt": "2026-10-22T14:03:43.027Z",
+     "updatedAt": "2026-10-22T14:03:43.027Z"
+    },
+    {
+     "id": "7f863e0b-dc1c-4c91-a45b-f8d031890ab9",
+     "code": "TSK-00131",
+     "title": "Store opening checklist",
+     "description": "Complete before opening the store to customers.",
+     "taskType": "OUTLET",
+     "status": "TODO",
+     "priority": "HIGH",
+     "startAt": "2026-11-20T03:30:00.000Z",
+     "dueAt": "2026-11-20T04:00:00.000Z",
+     "timezone": "Asia/Kolkata",
+     "durationMinutes": 30,
+     "isOverdue": false,
+     "assignmentMode": "SINGLE",
+     "project": {
+      "id": "aeeda2fb-a590-470f-86b8-6fb42b6eec81",
+      "code": "DEMO-RETAIL",
+      "name": "Retail Excellence",
+      "color": "#10b981",
+      "status": "ACTIVE"
+     },
+     "outlet": {
+      "id": "01cdd85a-1ad5-4ef2-82df-50c7d6361f5a",
+      "code": "DEMO-ANNA",
+      "name": "Anna Nagar Store"
+     },
+     "category": {
+      "id": "7e2dfc6c-5a85-44e9-8337-c27d0f871052",
+      "name": "Checklist"
+     },
+     "team": null,
+     "creator": {
+      "id": "42bc8eb5-bd7d-4f71-960f-7eac570e6fd7",
+      "fullName": "Karthik Subramanian"
+     },
+     "assignees": [
+      {
+       "id": "ba8af690-a857-42e8-b424-75aa91e4197c",
+       "fullName": "Suresh Babu",
+       "employeeCode": "DEMO-E05"
+      }
+     ],
+     "parentTaskId": null,
+     "scheduleId": "42f02342-a548-4094-869d-ea8645c5a314",
+     "occurrenceKey": "2026-11-20",
+     "isException": false,
+     "isMandatory": false,
+     "progressPercent": null,
+     "subtaskCount": 4,
+     "subtaskCompleted": 0,
+     "completedAt": null,
+     "reopenCount": 0,
+     "templateId": "81f83896-bc5f-4fd0-8f14-942634717c20",
+     "createdAt": "2026-10-22T14:03:43.027Z",
+     "updatedAt": "2026-10-22T14:03:43.027Z"
+    },
+    {
+     "id": "ef0285a7-809b-4b1b-984d-b31afbfbaed2",
+     "code": "TSK-00126",
+     "title": "Store opening checklist",
+     "description": "Complete before opening the store to customers.",
+     "taskType": "OUTLET",
+     "status": "TODO",
+     "priority": "HIGH",
+     "startAt": "2026-11-19T03:30:00.000Z",
+     "dueAt": "2026-11-19T04:00:00.000Z",
+     "timezone": "Asia/Kolkata",
+     "durationMinutes": 30,
+     "isOverdue": false,
+     "assignmentMode": "SINGLE",
+     "project": {
+      "id": "aeeda2fb-a590-470f-86b8-6fb42b6eec81",
+      "code": "DEMO-RETAIL",
+      "name": "Retail Excellence",
+      "color": "#10b981",
+      "status": "ACTIVE"
+     },
+     "outlet": {
+      "id": "01cdd85a-1ad5-4ef2-82df-50c7d6361f5a",
+      "code": "DEMO-ANNA",
+      "name": "Anna Nagar Store"
+     },
+     "category": {
+      "id": "7e2dfc6c-5a85-44e9-8337-c27d0f871052",
+      "name": "Checklist"
+     },
+     "team": null,
+     "creator": {
+      "id": "42bc8eb5-bd7d-4f71-960f-7eac570e6fd7",
+      "fullName": "Karthik Subramanian"
+     },
+     "assignees": [
+      {
+       "id": "ba8af690-a857-42e8-b424-75aa91e4197c",
+       "fullName": "Suresh Babu",
+       "employeeCode": "DEMO-E05"
+      }
+     ],
+     "parentTaskId": null,
+     "scheduleId": "42f02342-a548-4094-869d-ea8645c5a314",
+     "occurrenceKey": "2026-11-19",
+     "isException": false,
+     "isMandatory": false,
+     "progressPercent": null,
+     "subtaskCount": 4,
+     "subtaskCompleted": 0,
+     "completedAt": null,
+     "reopenCount": 0,
+     "templateId": "81f83896-bc5f-4fd0-8f14-942634717c20",
+     "createdAt": "2026-10-22T14:03:43.027Z",
+     "updatedAt": "2026-10-22T14:03:43.027Z"
+    },
+    {
+     "id": "10350b08-4379-42af-98ae-f347e4f53740",
+     "code": "TSK-00121",
+     "title": "Store opening checklist",
+     "description": "Complete before opening the store to customers.",
+     "taskType": "OUTLET",
+     "status": "TODO",
+     "priority": "HIGH",
+     "startAt": "2026-11-18T03:30:00.000Z",
+     "dueAt": "2026-11-18T04:00:00.000Z",
+     "timezone": "Asia/Kolkata",
+     "durationMinutes": 30,
+     "isOverdue": false,
+     "assignmentMode": "SINGLE",
+     "project": {
+      "id": "aeeda2fb-a590-470f-86b8-6fb42b6eec81",
+      "code": "DEMO-RETAIL",
+      "name": "Retail Excellence",
+      "color": "#10b981",
+      "status": "ACTIVE"
+     },
+     "outlet": {
+      "id": "01cdd85a-1ad5-4ef2-82df-50c7d6361f5a",
+      "code": "DEMO-ANNA",
+      "name": "Anna Nagar Store"
+     },
+     "category": {
+      "id": "7e2dfc6c-5a85-44e9-8337-c27d0f871052",
+      "name": "Checklist"
+     },
+     "team": null,
+     "creator": {
+      "id": "42bc8eb5-bd7d-4f71-960f-7eac570e6fd7",
+      "fullName": "Karthik Subramanian"
+     },
+     "assignees": [
+      {
+       "id": "ba8af690-a857-42e8-b424-75aa91e4197c",
+       "fullName": "Suresh Babu",
+       "employeeCode": "DEMO-E05"
+      }
+     ],
+     "parentTaskId": null,
+     "scheduleId": "42f02342-a548-4094-869d-ea8645c5a314",
+     "occurrenceKey": "2026-11-18",
+     "isException": false,
+     "isMandatory": false,
+     "progressPercent": null,
+     "subtaskCount": 4,
+     "subtaskCompleted": 0,
+     "completedAt": null,
+     "reopenCount": 0,
+     "templateId": "81f83896-bc5f-4fd0-8f14-942634717c20",
+     "createdAt": "2026-10-22T14:03:43.027Z",
+     "updatedAt": "2026-10-22T14:03:43.027Z"
+    },
+    {
+     "id": "2d6fb01e-3d29-4a69-8913-0d1700b23d1b",
+     "code": "TSK-00116",
+     "title": "Store opening checklist",
+     "description": "Complete before opening the store to customers.",
+     "taskType": "OUTLET",
+     "status": "TODO",
+     "priority": "HIGH",
+     "startAt": "2026-11-17T03:30:00.000Z",
+     "dueAt": "2026-11-17T04:00:00.000Z",
+     "timezone": "Asia/Kolkata",
+     "durationMinutes": 30,
+     "isOverdue": false,
+     "assignmentMode": "SINGLE",
+     "project": {
+      "id": "aeeda2fb-a590-470f-86b8-6fb42b6eec81",
+      "code": "DEMO-RETAIL",
+      "name": "Retail Excellence",
+      "color": "#10b981",
+      "status": "ACTIVE"
+     },
+     "outlet": {
+      "id": "01cdd85a-1ad5-4ef2-82df-50c7d6361f5a",
+      "code": "DEMO-ANNA",
+      "name": "Anna Nagar Store"
+     },
+     "category": {
+      "id": "7e2dfc6c-5a85-44e9-8337-c27d0f871052",
+      "name": "Checklist"
+     },
+     "team": null,
+     "creator": {
+      "id": "42bc8eb5-bd7d-4f71-960f-7eac570e6fd7",
+      "fullName": "Karthik Subramanian"
+     },
+     "assignees": [
+      {
+       "id": "ba8af690-a857-42e8-b424-75aa91e4197c",
+       "fullName": "Suresh Babu",
+       "employeeCode": "DEMO-E05"
+      }
+     ],
+     "parentTaskId": null,
+     "scheduleId": "42f02342-a548-4094-869d-ea8645c5a314",
+     "occurrenceKey": "2026-11-17",
+     "isException": false,
+     "isMandatory": false,
+     "progressPercent": null,
+     "subtaskCount": 4,
+     "subtaskCompleted": 0,
+     "completedAt": null,
+     "reopenCount": 0,
+     "templateId": "81f83896-bc5f-4fd0-8f14-942634717c20",
+     "createdAt": "2026-10-22T14:03:43.027Z",
+     "updatedAt": "2026-10-22T14:03:43.027Z"
+    },
+    {
+     "id": "cf0d3bc1-73df-417e-ac2d-f477fa3e2c75",
+     "code": "TSK-00111",
+     "title": "Store opening checklist",
+     "description": "Complete before opening the store to customers.",
+     "taskType": "OUTLET",
+     "status": "TODO",
+     "priority": "HIGH",
+     "startAt": "2026-11-16T03:30:00.000Z",
+     "dueAt": "2026-11-16T04:00:00.000Z",
+     "timezone": "Asia/Kolkata",
+     "durationMinutes": 30,
+     "isOverdue": false,
+     "assignmentMode": "SINGLE",
+     "project": {
+      "id": "aeeda2fb-a590-470f-86b8-6fb42b6eec81",
+      "code": "DEMO-RETAIL",
+      "name": "Retail Excellence",
+      "color": "#10b981",
+      "status": "ACTIVE"
+     },
+     "outlet": {
+      "id": "01cdd85a-1ad5-4ef2-82df-50c7d6361f5a",
+      "code": "DEMO-ANNA",
+      "name": "Anna Nagar Store"
+     },
+     "category": {
+      "id": "7e2dfc6c-5a85-44e9-8337-c27d0f871052",
+      "name": "Checklist"
+     },
+     "team": null,
+     "creator": {
+      "id": "42bc8eb5-bd7d-4f71-960f-7eac570e6fd7",
+      "fullName": "Karthik Subramanian"
+     },
+     "assignees": [
+      {
+       "id": "ba8af690-a857-42e8-b424-75aa91e4197c",
+       "fullName": "Suresh Babu",
+       "employeeCode": "DEMO-E05"
+      }
+     ],
+     "parentTaskId": null,
+     "scheduleId": "42f02342-a548-4094-869d-ea8645c5a314",
+     "occurrenceKey": "2026-11-16",
+     "isException": false,
+     "isMandatory": false,
+     "progressPercent": null,
+     "subtaskCount": 4,
+     "subtaskCompleted": 0,
+     "completedAt": null,
+     "reopenCount": 0,
+     "templateId": "81f83896-bc5f-4fd0-8f14-942634717c20",
+     "createdAt": "2026-10-22T14:03:43.027Z",
+     "updatedAt": "2026-10-22T14:03:43.027Z"
+    }
+   ],
+   "page": 1,
+   "pageSize": 6,
+   "totalItems": 32,
+   "totalPages": 6
+  }
+ },
+ "/issues": {
+  "success": true,
+  "data": {
+   "items": [
+    {
+     "id": "563f97d1-8293-4742-b906-3e4e3a6bc60b",
+     "code": "ISS-00001",
+     "title": "Billing printer not working",
+     "description": "Printer at counter 2 shows paper jam error.",
+     "category": "EQUIPMENT",
+     "priority": "HIGH",
+     "status": "OPEN",
+     "reporter": {
+      "id": "05b73711-b209-4f64-a1bd-c110581d1e69",
+      "employeeCode": "DEMO-E06",
+      "fullName": "Anitha Devi",
+      "email": "anitha@giraffai.in",
+      "status": "ACTIVE"
+     },
+     "assignee": {
+      "id": "42bc8eb5-bd7d-4f71-960f-7eac570e6fd7",
+      "employeeCode": "DEMO-M02",
+      "fullName": "Karthik Subramanian",
+      "email": "ops.manager@giraffai.in",
+      "status": "ACTIVE"
+     },
+     "project": {
+      "id": "aeeda2fb-a590-470f-86b8-6fb42b6eec81",
+      "name": "Retail Excellence",
+      "code": "DEMO-RETAIL"
+     },
+     "outlet": {
+      "id": "f6a3e93e-304a-49ae-9955-f7cb13973794",
+      "name": "T. Nagar Store",
+      "code": "DEMO-TNAGAR"
+     },
+     "task": null,
+     "resolutionNote": null,
+     "resolvedBy": null,
+     "resolvedAt": null,
+     "reopenCount": 0,
+     "createdAt": "2026-10-22T14:03:38.357Z",
+     "updatedAt": "2026-10-22T14:03:38.357Z"
+    },
+    {
+     "id": "8ed0d28a-921a-4617-8b9e-63a268a3d123",
+     "code": "ISS-00002",
+     "title": "VPN access for new joiners",
+     "description": null,
+     "category": "IT",
+     "priority": "MEDIUM",
+     "status": "IN_PROGRESS",
+     "reporter": {
+      "id": "3e658d68-ec6b-46c8-b9b6-16ab10941349",
+      "employeeCode": "DEMO-E02",
+      "fullName": "Divya Lakshmi",
+      "email": "divya@giraffai.in",
+      "status": "ACTIVE"
+     },
+     "assignee": {
+      "id": "4e786537-67d0-4c4a-bb8d-758df45437e8",
+      "employeeCode": "DEMO-M01",
+      "fullName": "Priya Raman",
+      "email": "manager@giraffai.in",
+      "status": "ACTIVE"
+     },
+     "project": {
+      "id": "c587f095-ff9a-4a6a-a443-76ce5bb5b2e3",
+      "name": "HRMS Rollout",
+      "code": "DEMO-HRMS"
+     },
+     "outlet": null,
+     "task": null,
+     "resolutionNote": null,
+     "resolvedBy": null,
+     "resolvedAt": null,
+     "reopenCount": 0,
+     "createdAt": "2026-10-22T14:03:38.357Z",
+     "updatedAt": "2026-10-22T14:03:38.357Z"
+    }
+   ],
+   "page": 1,
+   "pageSize": 6,
+   "totalItems": 2,
+   "totalPages": 1
+  }
+ },
+ "/calendar/events": {
+  "success": true,
+  "data": [
+   {
+    "id": "5bd28e8b-de19-4bd8-b672-3cb411407d57",
+    "code": "TSK-00002",
+    "title": "Prepare employee onboarding guide",
+    "start": "2026-10-17T04:30:00.668Z",
+    "end": "2026-10-21T12:30:00.668Z",
+    "allDay": false,
+    "status": "TODO",
+    "priority": "MEDIUM",
+    "isOverdue": true,
+    "taskType": "GENERAL",
+    "project": {
+     "id": "c587f095-ff9a-4a6a-a443-76ce5bb5b2e3",
+     "code": "DEMO-HRMS",
+     "name": "HRMS Rollout",
+     "color": "#6366f1",
+     "status": "ACTIVE"
+    },
+    "outlet": null,
+    "assignees": [
+     {
+      "id": "3e658d68-ec6b-46c8-b9b6-16ab10941349",
+      "fullName": "Divya Lakshmi",
+      "employeeCode": "DEMO-E02"
+     }
+    ],
+    "scheduleId": null,
+    "timezone": "Asia/Kolkata"
+   },
+   {
+    "id": "d3973095-3946-48e7-922d-dacfe1717f32",
+    "code": "TSK-00001",
+    "title": "Configure attendance geofence for HQ",
+    "start": "2026-10-20T04:30:00.668Z",
+    "end": "2026-10-23T12:30:00.668Z",
+    "allDay": false,
+    "status": "TODO",
+    "priority": "HIGH",
+    "isOverdue": false,
+    "taskType": "GENERAL",
+    "project": {
+     "id": "c587f095-ff9a-4a6a-a443-76ce5bb5b2e3",
+     "code": "DEMO-HRMS",
+     "name": "HRMS Rollout",
+     "color": "#6366f1",
+     "status": "ACTIVE"
+    },
+    "outlet": null,
+    "assignees": [
+     {
+      "id": "ffe7154f-ba0e-4988-84a5-320bbd6bac53",
+      "fullName": "Arun Kumar",
+      "employeeCode": "DEMO-E01"
+     }
+    ],
+    "scheduleId": null,
+    "timezone": "Asia/Kolkata"
+   },
+   {
+    "id": "a5881a35-9b36-4b06-b841-fe3995eacf92",
+    "code": "TSK-00006",
+    "title": "Store opening checklist",
+    "start": "2026-10-22T03:30:00.000Z",
+    "end": "2026-10-22T04:00:00.000Z",
+    "allDay": false,
+    "status": "TODO",
+    "priority": "HIGH",
+    "isOverdue": true,
+    "taskType": "OUTLET",
+    "project": {
+     "id": "aeeda2fb-a590-470f-86b8-6fb42b6eec81",
+     "code": "DEMO-RETAIL",
+     "name": "Retail Excellence",
+     "color": "#10b981",
+     "status": "ACTIVE"
+    },
+    "outlet": {
+     "id": "01cdd85a-1ad5-4ef2-82df-50c7d6361f5a",
+     "code": "DEMO-ANNA",
+     "name": "Anna Nagar Store"
+    },
+    "assignees": [
+     {
+      "id": "ba8af690-a857-42e8-b424-75aa91e4197c",
+      "fullName": "Suresh Babu",
+      "employeeCode": "DEMO-E05"
+     }
+    ],
+    "scheduleId": "42f02342-a548-4094-869d-ea8645c5a314",
+    "timezone": "Asia/Kolkata"
+   },
+   {
+    "id": "7d46416d-7dfd-4155-ba8b-8a781920dde2",
+    "code": "TSK-00003",
+    "title": "Review leave policy drafts",
+    "start": "2026-10-22T03:30:00.668Z",
+    "end": "2026-10-22T11:30:00.668Z",
+    "allDay": false,
+    "status": "TODO",
+    "priority": "URGENT",
+    "isOverdue": true,
+    "taskType": "GENERAL",
+    "project": {
+     "id": "c587f095-ff9a-4a6a-a443-76ce5bb5b2e3",
+     "code": "DEMO-HRMS",
+     "name": "HRMS Rollout",
+     "color": "#6366f1",
+     "status": "ACTIVE"
+    },
+    "outlet": null,
+    "assignees": [
+     {
+      "id": "ffe7154f-ba0e-4988-84a5-320bbd6bac53",
+      "fullName": "Arun Kumar",
+      "employeeCode": "DEMO-E01"
+     },
+     {
+      "id": "bb8783e5-563a-4dc6-83ae-4df2c56952fc",
+      "fullName": "Rahul Menon",
+      "employeeCode": "DEMO-E03"
+     }
+    ],
+    "scheduleId": null,
+    "timezone": "Asia/Kolkata"
+   },
+   {
+    "id": "dc0e23d4-e2d0-41eb-9ef0-37a9da27036d",
+    "code": "TSK-00011",
+    "title": "Store opening checklist",
+    "start": "2026-10-23T03:30:00.000Z",
+    "end": "2026-10-23T04:00:00.000Z",
+    "allDay": false,
+    "status": "TODO",
+    "priority": "HIGH",
+    "isOverdue": false,
+    "taskType": "OUTLET",
+    "project": {
+     "id": "aeeda2fb-a590-470f-86b8-6fb42b6eec81",
+     "code": "DEMO-RETAIL",
+     "name": "Retail Excellence",
+     "color": "#10b981",
+     "status": "ACTIVE"
+    },
+    "outlet": {
+     "id": "01cdd85a-1ad5-4ef2-82df-50c7d6361f5a",
+     "code": "DEMO-ANNA",
+     "name": "Anna Nagar Store"
+    },
+    "assignees": [
+     {
+      "id": "ba8af690-a857-42e8-b424-75aa91e4197c",
+      "fullName": "Suresh Babu",
+      "employeeCode": "DEMO-E05"
+     }
+    ],
+    "scheduleId": "42f02342-a548-4094-869d-ea8645c5a314",
+    "timezone": "Asia/Kolkata"
+   },
+   {
+    "id": "71a54731-4bfd-4979-8e20-ed3ad5c5fb66",
+    "code": "TSK-00005",
+    "title": "Display audit \u2013 T. Nagar",
+    "start": "2026-10-23T05:30:00.668Z",
+    "end": "2026-10-23T07:30:00.668Z",
+    "allDay": false,
+    "status": "TODO",
+    "priority": "MEDIUM",
+    "isOverdue": false,
+    "taskType": "OUTLET",
+    "project": {
+     "id": "aeeda2fb-a590-470f-86b8-6fb42b6eec81",
+     "code": "DEMO-RETAIL",
+     "name": "Retail Excellence",
+     "color": "#10b981",
+     "status": "ACTIVE"
+    },
+    "outlet": {
+     "id": "f6a3e93e-304a-49ae-9955-f7cb13973794",
+     "code": "DEMO-TNAGAR",
+     "name": "T. Nagar Store"
+    },
+    "assignees": [
+     {
+      "id": "5f494a61-3a4b-4543-b43f-8d92a4c10874",
+      "fullName": "Meena Iyer",
+      "employeeCode": "DEMO-E04"
+     }
+    ],
+    "scheduleId": null,
+    "timezone": "Asia/Kolkata"
+   },
+   {
+    "id": "4b44f228-565c-40ed-b9ee-c0246e904a6f",
+    "code": "TSK-00016",
+    "title": "Store opening checklist",
+    "start": "2026-10-24T03:30:00.000Z",
+    "end": "2026-10-24T04:00:00.000Z",
+    "allDay": false,
+    "status": "TODO",
+    "priority": "HIGH",
+    "isOverdue": false,
+    "taskType": "OUTLET",
+    "project": {
+     "id": "aeeda2fb-a590-470f-86b8-6fb42b6eec81",
+     "code": "DEMO-RETAIL",
+     "name": "Retail Excellence",
+     "color": "#10b981",
+     "status": "ACTIVE"
+    },
+    "outlet": {
+     "id": "01cdd85a-1ad5-4ef2-82df-50c7d6361f5a",
+     "code": "DEMO-ANNA",
+     "name": "Anna Nagar Store"
+    },
+    "assignees": [
+     {
+      "id": "ba8af690-a857-42e8-b424-75aa91e4197c",
+      "fullName": "Suresh Babu",
+      "employeeCode": "DEMO-E05"
+     }
+    ],
+    "scheduleId": "42f02342-a548-4094-869d-ea8645c5a314",
+    "timezone": "Asia/Kolkata"
+   },
+   {
+    "id": "6b8a5efe-8fe6-4e1b-80b7-0caf91df33fb",
+    "code": "TSK-00004",
+    "title": "Sprint demo preparation",
+    "start": "2026-10-25T08:30:00.668Z",
+    "end": "2026-10-25T10:30:00.668Z",
+    "allDay": false,
+    "status": "TODO",
+    "priority": "LOW",
+    "isOverdue": false,
+    "taskType": "GENERAL",
+    "project": {
+     "id": "c587f095-ff9a-4a6a-a443-76ce5bb5b2e3",
+     "code": "DEMO-HRMS",
+     "name": "HRMS Rollout",
+     "color": "#6366f1",
+     "status": "ACTIVE"
+    },
+    "outlet": null,
+    "assignees": [
+     {
+      "id": "3e658d68-ec6b-46c8-b9b6-16ab10941349",
+      "fullName": "Divya Lakshmi",
+      "employeeCode": "DEMO-E02"
+     },
+     {
+      "id": "bb8783e5-563a-4dc6-83ae-4df2c56952fc",
+      "fullName": "Rahul Menon",
+      "employeeCode": "DEMO-E03"
+     },
+     {
+      "id": "ffe7154f-ba0e-4988-84a5-320bbd6bac53",
+      "fullName": "Arun Kumar",
+      "employeeCode": "DEMO-E01"
+     },
+     {
+      "id": "4e786537-67d0-4c4a-bb8d-758df45437e8",
+      "fullName": "Priya Raman",
+      "employeeCode": "DEMO-M01"
+     }
+    ],
+    "scheduleId": null,
+    "timezone": "Asia/Kolkata"
+   },
+   {
+    "id": "c7935596-67ea-4627-a28e-36b9d4bcdfa0",
+    "code": "TSK-00021",
+    "title": "Store opening checklist",
+    "start": "2026-10-26T03:30:00.000Z",
+    "end": "2026-10-26T04:00:00.000Z",
+    "allDay": false,
+    "status": "TODO",
+    "priority": "HIGH",
+    "isOverdue": false,
+    "taskType": "OUTLET",
+    "project": {
+     "id": "aeeda2fb-a590-470f-86b8-6fb42b6eec81",
+     "code": "DEMO-RETAIL",
+     "name": "Retail Excellence",
+     "color": "#10b981",
+     "status": "ACTIVE"
+    },
+    "outlet": {
+     "id": "01cdd85a-1ad5-4ef2-82df-50c7d6361f5a",
+     "code": "DEMO-ANNA",
+     "name": "Anna Nagar Store"
+    },
+    "assignees": [
+     {
+      "id": "ba8af690-a857-42e8-b424-75aa91e4197c",
+      "fullName": "Suresh Babu",
+      "employeeCode": "DEMO-E05"
+     }
+    ],
+    "scheduleId": "42f02342-a548-4094-869d-ea8645c5a314",
+    "timezone": "Asia/Kolkata"
+   },
+   {
+    "id": "78884c11-a17c-499e-836a-faba7ce1dc5b",
+    "code": "TSK-00026",
+    "title": "Store opening checklist",
+    "start": "2026-10-27T03:30:00.000Z",
+    "end": "2026-10-27T04:00:00.000Z",
+    "allDay": false,
+    "status": "TODO",
+    "priority": "HIGH",
+    "isOverdue": false,
+    "taskType": "OUTLET",
+    "project": {
+     "id": "aeeda2fb-a590-470f-86b8-6fb42b6eec81",
+     "code": "DEMO-RETAIL",
+     "name": "Retail Excellence",
+     "color": "#10b981",
+     "status": "ACTIVE"
+    },
+    "outlet": {
+     "id": "01cdd85a-1ad5-4ef2-82df-50c7d6361f5a",
+     "code": "DEMO-ANNA",
+     "name": "Anna Nagar Store"
+    },
+    "assignees": [
+     {
+      "id": "ba8af690-a857-42e8-b424-75aa91e4197c",
+      "fullName": "Suresh Babu",
+      "employeeCode": "DEMO-E05"
+     }
+    ],
+    "scheduleId": "42f02342-a548-4094-869d-ea8645c5a314",
+    "timezone": "Asia/Kolkata"
+   },
+   {
+    "id": "9d6ed2af-150e-4ea9-9453-69a76c585f57",
+    "code": "TSK-00031",
+    "title": "Store opening checklist",
+    "start": "2026-10-28T03:30:00.000Z",
+    "end": "2026-10-28T04:00:00.000Z",
+    "allDay": false,
+    "status": "TODO",
+    "priority": "HIGH",
+    "isOverdue": false,
+    "taskType": "OUTLET",
+    "project": {
+     "id": "aeeda2fb-a590-470f-86b8-6fb42b6eec81",
+     "code": "DEMO-RETAIL",
+     "name": "Retail Excellence",
+     "color": "#10b981",
+     "status": "ACTIVE"
+    },
+    "outlet": {
+     "id": "01cdd85a-1ad5-4ef2-82df-50c7d6361f5a",
+     "code": "DEMO-ANNA",
+     "name": "Anna Nagar Store"
+    },
+    "assignees": [
+     {
+      "id": "ba8af690-a857-42e8-b424-75aa91e4197c",
+      "fullName": "Suresh Babu",
+      "employeeCode": "DEMO-E05"
+     }
+    ],
+    "scheduleId": "42f02342-a548-4094-869d-ea8645c5a314",
+    "timezone": "Asia/Kolkata"
+   },
+   {
+    "id": "5e7a5d05-981f-4bbf-aa4f-7f1440a5bde6",
+    "code": "TSK-00036",
+    "title": "Store opening checklist",
+    "start": "2026-10-29T03:30:00.000Z",
+    "end": "2026-10-29T04:00:00.000Z",
+    "allDay": false,
+    "status": "TODO",
+    "priority": "HIGH",
+    "isOverdue": false,
+    "taskType": "OUTLET",
+    "project": {
+     "id": "aeeda2fb-a590-470f-86b8-6fb42b6eec81",
+     "code": "DEMO-RETAIL",
+     "name": "Retail Excellence",
+     "color": "#10b981",
+     "status": "ACTIVE"
+    },
+    "outlet": {
+     "id": "01cdd85a-1ad5-4ef2-82df-50c7d6361f5a",
+     "code": "DEMO-ANNA",
+     "name": "Anna Nagar Store"
+    },
+    "assignees": [
+     {
+      "id": "ba8af690-a857-42e8-b424-75aa91e4197c",
+      "fullName": "Suresh Babu",
+      "employeeCode": "DEMO-E05"
+     }
+    ],
+    "scheduleId": "42f02342-a548-4094-869d-ea8645c5a314",
+    "timezone": "Asia/Kolkata"
+   },
+   {
+    "id": "b90bff34-aa6f-4550-a79c-5948a2195c63",
+    "code": "TSK-00041",
+    "title": "Store opening checklist",
+    "start": "2026-10-30T03:30:00.000Z",
+    "end": "2026-10-30T04:00:00.000Z",
+    "allDay": false,
+    "status": "TODO",
+    "priority": "HIGH",
+    "isOverdue": false,
+    "taskType": "OUTLET",
+    "project": {
+     "id": "aeeda2fb-a590-470f-86b8-6fb42b6eec81",
+     "code": "DEMO-RETAIL",
+     "name": "Retail Excellence",
+     "color": "#10b981",
+     "status": "ACTIVE"
+    },
+    "outlet": {
+     "id": "01cdd85a-1ad5-4ef2-82df-50c7d6361f5a",
+     "code": "DEMO-ANNA",
+     "name": "Anna Nagar Store"
+    },
+    "assignees": [
+     {
+      "id": "ba8af690-a857-42e8-b424-75aa91e4197c",
+      "fullName": "Suresh Babu",
+      "employeeCode": "DEMO-E05"
+     }
+    ],
+    "scheduleId": "42f02342-a548-4094-869d-ea8645c5a314",
+    "timezone": "Asia/Kolkata"
+   },
+   {
+    "id": "810db964-1bf1-46d2-8991-e5eb11e224ea",
+    "code": "TSK-00046",
+    "title": "Store opening checklist",
+    "start": "2026-10-31T03:30:00.000Z",
+    "end": "2026-10-31T04:00:00.000Z",
+    "allDay": false,
+    "status": "TODO",
+    "priority": "HIGH",
+    "isOverdue": false,
+    "taskType": "OUTLET",
+    "project": {
+     "id": "aeeda2fb-a590-470f-86b8-6fb42b6eec81",
+     "code": "DEMO-RETAIL",
+     "name": "Retail Excellence",
+     "color": "#10b981",
+     "status": "ACTIVE"
+    },
+    "outlet": {
+     "id": "01cdd85a-1ad5-4ef2-82df-50c7d6361f5a",
+     "code": "DEMO-ANNA",
+     "name": "Anna Nagar Store"
+    },
+    "assignees": [
+     {
+      "id": "ba8af690-a857-42e8-b424-75aa91e4197c",
+      "fullName": "Suresh Babu",
+      "employeeCode": "DEMO-E05"
+     }
+    ],
+    "scheduleId": "42f02342-a548-4094-869d-ea8645c5a314",
+    "timezone": "Asia/Kolkata"
+   }
+  ]
+ },
+ "/leave-balances/me": {
+  "success": true,
+  "data": [
+   {
+    "leaveType": {
+     "id": "25eecca1-ee3e-4cb3-a728-07e35ca461d6",
+     "code": "CL",
+     "name": "Casual Leave",
+     "color": "#3b82f6",
+     "isPaid": true
+    },
+    "policyId": "f6e8359d-7422-4d57-9cd8-669f40617924",
+    "year": 2026,
+    "entitled": 10,
+    "carriedForward": 0,
+    "adjustments": 0,
+    "used": 0,
+    "balance": 10,
+    "pending": 0,
+    "available": 10,
+    "allowNegativeBalance": false,
+    "negativeBalanceLimit": 0,
+    "halfDayAllowed": true
+   },
+   {
+    "leaveType": {
+     "id": "607085bb-0ffb-4e0d-9ac6-89939e63f73b",
+     "code": "SL",
+     "name": "Sick Leave",
+     "color": "#ef4444",
+     "isPaid": true
+    },
+    "policyId": "dfd38e0f-c94d-443a-aae6-794d730d3e42",
+    "year": 2026,
+    "entitled": 8,
+    "carriedForward": 0,
+    "adjustments": 0,
+    "used": 0,
+    "balance": 8,
+    "pending": 0,
+    "available": 8,
+    "allowNegativeBalance": false,
+    "negativeBalanceLimit": 0,
+    "halfDayAllowed": true
+   },
+   {
+    "leaveType": {
+     "id": "88d84137-1720-45b0-a65c-efc26039b814",
+     "code": "EL",
+     "name": "Earned Leave",
+     "color": "#10b981",
+     "isPaid": true
+    },
+    "policyId": "d2c278cc-fb62-4ed4-8b08-08f5f1b27a47",
+    "year": 2026,
+    "entitled": 15,
+    "carriedForward": 0,
+    "adjustments": 0,
+    "used": 0,
+    "balance": 15,
+    "pending": 0,
+    "available": 15,
+    "allowNegativeBalance": false,
+    "negativeBalanceLimit": 0,
+    "halfDayAllowed": true
+   },
+   {
+    "leaveType": {
+     "id": "b86d3aa8-7cc5-4c35-8648-68a912e87721",
+     "code": "LOP",
+     "name": "Loss of Pay",
+     "color": "#6b7280",
+     "isPaid": false
+    },
+    "policyId": "86996b37-92b7-4291-9fb8-a36b1635be5c",
+    "year": 2026,
+    "entitled": 0,
+    "carriedForward": 0,
+    "adjustments": 0,
+    "used": 0,
+    "balance": 0,
+    "pending": 0,
+    "available": 0,
+    "allowNegativeBalance": true,
+    "negativeBalanceLimit": 30,
+    "halfDayAllowed": true
+   }
+  ]
+ },
+ "/leave-requests": {
+  "success": true,
+  "data": {
+   "items": [
+    {
+     "id": "88384c8e-dda0-4b9e-a7a0-edc437cdd67f",
+     "employeeId": "ffe7154f-ba0e-4988-84a5-320bbd6bac53",
+     "employee": {
+      "id": "ffe7154f-ba0e-4988-84a5-320bbd6bac53",
+      "employeeCode": "DEMO-E01",
+      "fullName": "Arun Kumar",
+      "email": "employee@giraffai.in",
+      "status": "ACTIVE",
+      "department": "Engineering"
+     },
+     "leaveTypeId": "25eecca1-ee3e-4cb3-a728-07e35ca461d6",
+     "leaveType": {
+      "id": "25eecca1-ee3e-4cb3-a728-07e35ca461d6",
+      "code": "CL",
+      "name": "Casual Leave",
+      "description": null,
+      "isPaid": true,
+      "color": "#3b82f6",
+      "status": "ACTIVE",
+      "createdAt": "2026-10-21T12:19:47.662Z",
+      "updatedAt": "2026-10-21T12:19:47.662Z"
+     },
+     "startDate": "2026-10-27",
+     "endDate": "2026-10-27",
+     "startSession": "FULL",
+     "endSession": "FULL",
+     "days": 1,
+     "reason": "Family function",
+     "attachmentId": null,
+     "status": "PENDING",
+     "approverEmployeeId": null,
+     "approver": null,
+     "decisionComment": null,
+     "decidedAt": null,
+     "history": [
+      {
+       "at": "2026-10-22T14:03:42.576Z",
+       "action": "SUBMITTED",
+       "byEmployeeId": "ffe7154f-ba0e-4988-84a5-320bbd6bac53"
+      }
+     ],
+     "createdAt": "2026-10-22T14:03:38.357Z",
+     "updatedAt": "2026-10-22T14:03:38.357Z"
+    },
+    {
+     "id": "ddb4434c-661d-4d5f-ad02-647cbe3ecfdd",
+     "employeeId": "5f494a61-3a4b-4543-b43f-8d92a4c10874",
+     "employee": {
+      "id": "5f494a61-3a4b-4543-b43f-8d92a4c10874",
+      "employeeCode": "DEMO-E04",
+      "fullName": "Meena Iyer",
+      "email": "meena@giraffai.in",
+      "status": "ACTIVE",
+      "department": "Operations"
+     },
+     "leaveTypeId": "607085bb-0ffb-4e0d-9ac6-89939e63f73b",
+     "leaveType": {
+      "id": "607085bb-0ffb-4e0d-9ac6-89939e63f73b",
+      "code": "SL",
+      "name": "Sick Leave",
+      "description": null,
+      "isPaid": true,
+      "color": "#ef4444",
+      "status": "ACTIVE",
+      "createdAt": "2026-10-21T12:19:47.711Z",
+      "updatedAt": "2026-10-21T12:19:47.711Z"
+     },
+     "startDate": "2026-10-16",
+     "endDate": "2026-10-16",
+     "startSession": "FULL",
+     "endSession": "FULL",
+     "days": 1,
+     "reason": "Fever",
+     "attachmentId": null,
+     "status": "PENDING",
+     "approverEmployeeId": null,
+     "approver": null,
+     "decisionComment": null,
+     "decidedAt": null,
+     "history": [
+      {
+       "at": "2026-10-22T14:03:42.579Z",
+       "action": "SUBMITTED",
+       "byEmployeeId": "5f494a61-3a4b-4543-b43f-8d92a4c10874"
+      }
+     ],
+     "createdAt": "2026-10-22T14:03:38.357Z",
+     "updatedAt": "2026-10-22T14:03:38.357Z"
+    }
+   ],
+   "page": 1,
+   "pageSize": 6,
+   "totalItems": 2,
+   "totalPages": 1
+  }
+ },
+ "/holidays": {
+  "success": true,
+  "data": {
+   "items": [
+    {
+     "id": "0a6d317a-4cc7-446b-baa9-29638e0a624a",
+     "date": "2026-12-25",
+     "name": "Christmas",
+     "isOptional": false,
+     "createdAt": "2026-10-22T14:03:38.357Z"
+    },
+    {
+     "id": "369f5d0b-ce80-4e24-b0da-bc3db62eb645",
+     "date": "2026-10-02",
+     "name": "Gandhi Jayanti",
+     "isOptional": false,
+     "createdAt": "2026-10-22T14:03:38.357Z"
+    },
+    {
+     "id": "99454c7e-c6a5-4dfb-95c8-b12ad1afbef8",
+     "date": "2026-08-15",
+     "name": "Independence Day",
+     "isOptional": false,
+     "createdAt": "2026-10-22T14:03:38.357Z"
+    },
+    {
+     "id": "296c57ce-0992-49b3-9480-d337f5c434ba",
+     "date": "2026-01-26",
+     "name": "Republic Day",
+     "isOptional": false,
+     "createdAt": "2026-10-22T14:03:38.357Z"
+    },
+    {
+     "id": "83d9961e-9660-434b-a763-b8244508e9af",
+     "date": "2026-01-14",
+     "name": "Pongal",
+     "isOptional": false,
+     "createdAt": "2026-10-22T14:03:38.357Z"
+    }
+   ],
+   "page": 1,
+   "pageSize": 50,
+   "totalItems": 5,
+   "totalPages": 1
+  }
+ },
+ "/leave-requests/calendar": {
+  "success": true,
+  "data": [
+   {
+    "id": "a",
+    "employee": {
+     "id": "ffe7154f-ba0e-4988-84a5-320bbd6bac53",
+     "employeeCode": "DEMO-E01",
+     "fullName": "Arun Kumar",
+     "email": "employee@giraffai.in",
+     "status": "ACTIVE"
+    },
+    "leaveType": {
+     "id": "25eecca1-ee3e-4cb3-a728-07e35ca461d6",
+     "name": "Casual Leave",
+     "color": "#3b82f6"
+    },
+    "startDate": "2026-10-26",
+    "endDate": "2026-10-26",
+    "startSession": "FULL",
+    "endSession": "FULL",
+    "days": 1,
+    "status": "APPROVED"
+   },
+   {
+    "id": "b",
+    "employee": {
+     "id": "ffe7154f-ba0e-4988-84a5-320bbd6bac53",
+     "employeeCode": "DEMO-E01",
+     "fullName": "Arun Kumar",
+     "email": "employee@giraffai.in",
+     "status": "ACTIVE"
+    },
+    "leaveType": {
+     "id": "25eecca1-ee3e-4cb3-a728-07e35ca461d6",
+     "name": "Casual Leave",
+     "color": "#3b82f6"
+    },
+    "startDate": "2026-10-27",
+    "endDate": "2026-10-27",
+    "startSession": "FULL",
+    "endSession": "FULL",
+    "days": 1,
+    "status": "PENDING"
+   },
+   {
+    "id": "c",
+    "employee": {
+     "id": "ffe7154f-ba0e-4988-84a5-320bbd6bac53",
+     "employeeCode": "DEMO-E01",
+     "fullName": "Arun Kumar",
+     "email": "employee@giraffai.in",
+     "status": "ACTIVE"
+    },
+    "leaveType": {
+     "id": "25eecca1-ee3e-4cb3-a728-07e35ca461d6",
+     "name": "Casual Leave",
+     "color": "#3b82f6"
+    },
+    "startDate": "2026-10-28",
+    "endDate": "2026-10-28",
+    "startSession": "FULL",
+    "endSession": "FULL",
+    "days": 1,
+    "status": "PENDING"
+   }
+  ]
+ }
+}
