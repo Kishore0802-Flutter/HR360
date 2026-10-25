@@ -13,7 +13,7 @@ void main() {
     tester,
   ) async {
     tz.initializeTimeZones();
-    tester.view.physicalSize = const Size(390, 1000);
+    tester.view.physicalSize = const Size(390, 2400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
 

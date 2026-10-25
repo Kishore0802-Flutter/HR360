@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'api.dart';
 import 'design.dart';
 import 'directory.dart';
+import 'leave.dart';
 import 'shell.dart';
 import 'welcome.dart';
 
@@ -121,6 +122,10 @@ GoRouter buildRouter(AppGate gate) {
       GoRoute(
         path: '/holidays',
         builder: (context, state) => HolidaysPage(api: api),
+      ),
+      GoRoute(
+        path: '/leave/calendar',
+        builder: (context, state) => LeaveCalendarPage(api: api),
       ),
     ],
   );

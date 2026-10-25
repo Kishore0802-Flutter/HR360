@@ -109,11 +109,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Leave calendar'), findsOneWidget);
     expect(find.text('Loss of Pay'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-    await tester.tap(find.byTooltip('Next month'));
-    await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     api.dispose();
   });

@@ -48,7 +48,9 @@
 <key>NSFaceIDUsageDescription</key>
 <string>Face ID signs you in to HR#360 on this device.</string>
 <key>NSCameraUsageDescription</key>
-<string>The front camera takes your selfie when you clock in.</string>
+<string>The camera captures photos for attendance selfies and document attachments.</string>
+<key>NSPhotoLibraryUsageDescription</key>
+<string>HR#360 needs access to your photos to attach documents to leave requests.</string>
 <key>NSLocationWhenInUseUsageDescription</key><string>Your location verifies that you are at your assigned office when recording attendance.</string>
 <key>NSAppTransportSecurity</key><dict><key>NSAllowsLocalNetworking</key><true/></dict>
 </dict>

@@ -132,14 +132,22 @@ class RefreshInterceptor extends QueuedInterceptor {
     try {
       final response = await plain.post<dynamic>(
         '/auth/refresh',
-        data: const <String, dynamic>{},
-        options: Options(headers: {'Cookie': 'hrms_rt=$cookie'}),
+        data: {'refreshToken': cookie},
+        options: Options(headers: {
+          'Cookie': 'hrms_rt=$cookie',
+          'Authorization': 'Bearer $cookie',
+        }),
       );
       final body = response.data;
-      final data = body is Map ? body['data'] : null;
+      final data = body is Map && body.containsKey('data') ? body['data'] : body;
       final token = data is Map ? data['accessToken']?.toString() : null;
       if (token == null || token.isEmpty) return false;
-      await onRefreshed(token, refreshCookie(response.headers) ?? cookie);
+      await onRefreshed(
+        token,
+        refreshCookie(response.headers) ??
+            (data is Map ? data['refreshToken']?.toString() : null) ??
+            cookie,
+      );
       return true;
     } catch (_) {
       return false;

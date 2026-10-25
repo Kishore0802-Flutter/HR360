@@ -148,6 +148,17 @@ class OfflineStore {
         id,
       ),
       ('POST', ['logout']) => {'ok': true},
+      ('POST', ['auth', 'change-password']) => {'accessToken': 'mock-access-token'},
+      ('PATCH', ['auth', 'me', 'preferences']) => {
+        'theme': 'midnight-blue',
+        'preferences': {
+          'reducedMotion': false,
+          'overdueReminders': false,
+          'emailNotifications': false,
+          'dueReminders': false,
+          ...(body?['preferences'] is Map ? body!['preferences'] as Map : {}),
+        },
+      },
       _ => throw OfflineFailure('That action is not available on this device.'),
     };
     return result;

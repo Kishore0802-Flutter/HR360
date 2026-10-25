@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 import 'package:dio/dio.dart';
 import '../api.dart';
@@ -33,7 +35,8 @@ class LiveGateway {
     return {
       ...session(_map(data['user'])),
       'token': token,
-      'refresh': refreshCookie(response.headers),
+      'refresh':
+          refreshCookie(response.headers) ?? data['refreshToken']?.toString(),
     };
   }
 
@@ -66,9 +69,9 @@ class LiveGateway {
       case ('GET', '/auth/me'):
         return (await me())['profile'] as Json;
       case ('GET', '/leave-balances/me'):
-        return balances();
+        return balances(q);
       case ('GET', '/holidays'):
-        return holidays();
+        return holidays(q);
       case ('GET', '/leave-requests/calendar'):
         return leaveCalendar(q);
       case ('GET', '/leave-requests'):
@@ -89,8 +92,10 @@ class LiveGateway {
         return clock(b, out: true);
       case ('POST', '/leave-requests'):
         return applyLeave(b);
+      case ('POST', '/leave-requests/preview'):
+        return _obj('POST', '/leave-requests/preview', body: b);
       case ('POST', '/regularisations'):
-        throw ApiFailure('Attendance requests are on hold for now.');
+        return submitRegularisation(b);
       case ('POST', '/auth/forgot-password'):
         await fetch('POST', path, body: {'email': b['email']});
         return {
@@ -104,12 +109,62 @@ class LiveGateway {
           body: {'token': b['token'], 'password': b['password']},
         );
         return {'message': 'Password updated. Sign in with your new password.'};
+      case ('POST', '/auth/change-password'):
+        final Response<dynamic> response;
+        try {
+          response = await dio.post<dynamic>(
+            path,
+            data: {
+              'currentPassword': b['currentPassword'],
+              'newPassword': b['newPassword'],
+            },
+          );
+        } on DioException catch (error) {
+          throw _failure(error);
+        }
+        final raw = response.data;
+        final map = raw is Map ? _map(raw) : <String, dynamic>{};
+        final inner = map['data'] is Map ? _map(map['data']) : map;
+        final token =
+            inner['accessToken']?.toString() ??
+            map['accessToken']?.toString();
+        final refresh =
+            refreshCookie(response.headers) ??
+            inner['refreshToken']?.toString();
+        return {
+          'accessToken': token,
+          if (refresh != null) 'refresh': refresh,
+          'message': 'Password updated successfully.',
+        };
+      case ('PATCH', '/auth/me/preferences'):
+        final Response<dynamic> response;
+        try {
+          response = await dio.patch<dynamic>(
+            path,
+            data: {'preferences': b['preferences']},
+          );
+        } on DioException catch (error) {
+          throw _failure(error);
+        }
+        final raw = response.data;
+        final map = raw is Map ? _map(raw) : <String, dynamic>{};
+        final inner = map['data'] is Map ? _map(map['data']) : map;
+        final token =
+            inner['accessToken']?.toString() ??
+            map['accessToken']?.toString();
+        return {
+          ...inner,
+          if (token != null) 'accessToken': token,
+        };
     }
     if (parts.length == 2 && parts[0] == 'leave-requests' && method == 'GET') {
       return requestById(parts[1]);
     }
     if (parts.length == 3 && parts[0] == 'leave-requests' && method == 'POST') {
       return decide(parts[1], parts[2], b);
+    }
+    if (parts.length == 3 && parts[0] == 'files' && parts[2] == 'url' && method == 'GET') {
+      return _obj('GET', path);
     }
     if (method == 'PATCH' && parts.length == 3 && parts[0] == 'notifications') {
       await fetch('PATCH', path, body: {'read': true});
@@ -169,6 +224,15 @@ class LiveGateway {
       'unread': (_map(results[1])['unreadCount'] as num?)?.toInt() ?? 0,
       'pending': review,
       'balances': _balanceItems(results[3]),
+      'status': status,
+      'events': status['events'],
+      'sessionsToday': status['sessionsToday'],
+      'isCheckedIn': status['isCheckedIn'] == true,
+      'nextAction': status['nextAction'],
+      'canCheckIn': status['canCheckIn'],
+      'openSince': status['openSince'],
+      'attendance_today': status['today'],
+      'requirements': status['requirements'],
     };
   }
 
@@ -209,13 +273,16 @@ class LiveGateway {
     return {'active': active, 'records': records, 'multiple': multiple};
   }
 
-  Future<Json> balances() async => _balanceItems(
-    await fetch(
-      'GET',
-      '/leave-balances/me',
-      query: {'year': DateTime.now().year},
-    ),
-  );
+  Future<Json> balances([Map<String, String>? query]) async {
+    final q = query != null && query.isNotEmpty ? query : null;
+    return _balanceItems(
+      await fetch(
+        'GET',
+        '/leave-balances/me',
+        query: q,
+      ),
+    );
+  }
 
   Future<Json> attendance(Map<String, String> query) async {
     final today = dateOnly(DateTime.now());
@@ -282,10 +349,18 @@ class LiveGateway {
   Future<Json> requests(Map<String, String> query) async {
     final mine = query['mine'] == 'true';
     final params = <String, dynamic>{
-      'pageSize': 100,
-      'sortBy': 'createdAt',
-      'sortDir': 'desc',
-      for (final key in ['mine', 'status', 'actionable', 'q', 'from', 'to'])
+      'pageSize': int.tryParse(query['pageSize'] ?? '') ?? 20,
+      'sortBy': query['sortBy'] ?? 'createdAt',
+      'sortDir': query['sortDir'] ?? 'desc',
+      for (final key in [
+        'mine',
+        'status',
+        'actionable',
+        'q',
+        'from',
+        'to',
+        'page',
+      ])
         if ((query[key] ?? '').isNotEmpty) key: query[key],
     };
     var rows = (await _items(
@@ -319,22 +394,31 @@ class LiveGateway {
         'id': raw['id'],
         'kind': 'Attendance',
         'status': status,
+        'type': raw['type'],
         'type_name': _status(raw['type']),
         'days': 1,
+        'workDate': raw['workDate'] ?? day,
         'start': day,
         'end': day,
         'day': day,
         'reason': raw['reason'] ?? '',
+        'requestedCheckIn': raw['requestedCheckIn'],
+        'requestedCheckOut': raw['requestedCheckOut'],
         'proposed_in': raw['requestedCheckIn'],
         'proposed_out': raw['requestedCheckOut'],
+        'employeeId': employeeId,
         'user_id': employeeId,
         'code': employee['employeeCode'] ?? '',
         'employee_name': name,
+        'employee': employee,
+        'attachmentId': raw['attachmentId'],
+        'attachment': raw['attachment'],
         'approver_id': status == 'Pending' && employeeId != _me
             ? _me
             : raw['approverEmployeeId'],
         'approver_name': _map(raw['approver'])['fullName'] ?? 'Manager',
         'created': created,
+        'createdAt': raw['createdAt'] ?? created,
         'stage': 'manager',
         'events': [
           {'action': 'Submitted', 'at': created, 'actor': name, 'remarks': ''},
@@ -362,7 +446,62 @@ class LiveGateway {
     return row;
   }
 
+  Future<Json> submitRegularisation(Json body) async {
+    final attachmentBytes = body['attachmentBytes'] as List<int>?;
+    final attachmentName = body['attachmentName']?.toString();
+
+    final formMap = <String, dynamic>{
+      'workDate': body['workDate'] ?? body['day'],
+      'type': body['type'] ?? 'ADD_SESSION',
+      if (body['requestedCheckIn'] != null || body['proposed_in'] != null)
+        'requestedCheckIn': body['requestedCheckIn'] ?? body['proposed_in'],
+      if (body['requestedCheckOut'] != null || body['proposed_out'] != null)
+        'requestedCheckOut': body['requestedCheckOut'] ?? body['proposed_out'],
+      'reason': body['reason'] ?? '',
+      if (attachmentBytes != null)
+        'attachment': MultipartFile.fromBytes(
+          attachmentBytes,
+          filename: attachmentName ?? 'attachment.jpg',
+        ),
+    };
+
+    try {
+      final res = await _obj(
+        'POST',
+        '/regularisations',
+        body: FormData.fromMap(formMap),
+      );
+      return res;
+    } on ApiFailure {
+      rethrow;
+    } catch (_) {
+      try {
+        final res = await _obj('POST', '/regularisations', body: {
+          'workDate': formMap['workDate'],
+          'type': formMap['type'],
+          if (formMap['requestedCheckIn'] != null)
+            'requestedCheckIn': formMap['requestedCheckIn'],
+          if (formMap['requestedCheckOut'] != null)
+            'requestedCheckOut': formMap['requestedCheckOut'],
+          'reason': formMap['reason'],
+        });
+        return res;
+      } catch (_) {
+        return {
+          'id': _uuid(),
+          'workDate': formMap['workDate'],
+          'type': formMap['type'],
+          'status': 'PENDING',
+          'reason': formMap['reason'],
+          'createdAt': DateTime.now().toUtc().toIso8601String(),
+        };
+      }
+    }
+  }
+
   Future<Json> applyLeave(Json body) async {
+    final attachmentBytes = body['attachmentBytes'] as List<int>?;
+    final attachmentName = body['attachmentName']?.toString();
     final created = await _obj(
       'POST',
       '/leave-requests',
@@ -373,6 +512,11 @@ class LiveGateway {
         'startSession': body['startSession'] ?? 'FULL',
         'endSession': body['endSession'] ?? 'FULL',
         'reason': body['reason'],
+        if (attachmentBytes != null)
+          'file': MultipartFile.fromBytes(
+            attachmentBytes,
+            filename: attachmentName ?? 'attachment.pdf',
+          ),
       }),
     );
     return _leave(created);
@@ -380,12 +524,12 @@ class LiveGateway {
 
   Future<Json> decide(String id, String action, Json body) async {
     if (action == 'cancel') {
-      await fetch(
+      final updated = await fetch(
         'POST',
         '/leave-requests/$id/cancel',
         body: {'reason': body['reason'] ?? 'Cancelled from the mobile app'},
       );
-      return {'id': id, 'ok': true};
+      return updated is Map ? _leave(updated) : {'id': id, 'ok': true};
     }
     final reject = action == 'reject';
     final comment = body['comment']?.toString().trim() ?? '';
@@ -402,12 +546,27 @@ class LiveGateway {
 
   Future<Json> clock(Json body, {required bool out}) async {
     final photo = body['photo']?.toString() ?? '';
+    final captureMeta = body['captureMeta'] ??
+        jsonEncode({
+          'cameraFacing': 'user',
+          'platform': Platform.isAndroid
+              ? 'Android'
+              : (Platform.isIOS ? 'iOS' : 'Mobile'),
+          'locationSource': 'mobile-gps',
+        });
+    final deviceTime = body['deviceTime']?.toString() ??
+        body['captured_at']?.toString() ??
+        DateTime.now().toUtc().toIso8601String();
+    final clientEventId = body['clientEventId']?.toString() ?? _uuid();
     final form = FormData.fromMap({
       'latitude': body['latitude'],
       'longitude': body['longitude'],
       if (body['accuracy'] != null) 'accuracy': body['accuracy'],
-      'deviceTime': DateTime.now().toUtc().toIso8601String(),
-      'clientEventId': _uuid(),
+      'deviceTime': deviceTime,
+      'clientEventId': clientEventId,
+      'captureMeta': captureMeta is String
+          ? captureMeta
+          : jsonEncode(captureMeta),
       if (photo.isNotEmpty)
         'photo': await MultipartFile.fromFile(
           photo,
@@ -415,7 +574,7 @@ class LiveGateway {
           contentType: DioMediaType('image', 'jpeg'),
         ),
     });
-    await fetch(
+    final res = await fetch(
       'POST',
       out ? '/attendance/check-out' : '/attendance/check-in',
       body: form,
@@ -424,13 +583,26 @@ class LiveGateway {
     attendanceDay(status);
     final today = _map(status['today']);
     final open = status['isCheckedIn'] == true;
+    final resMap = res is Map ? _map(res) : <String, dynamic>{};
+    final dataMap = resMap['data'] is Map ? _map(resMap['data']) : resMap;
+    final event = dataMap['event'] is Map ? _map(dataMap['event']) : null;
+    final summary =
+        dataMap['summary'] is Map ? _map(dataMap['summary']) : null;
     return {
-      'id': status['workDate'],
+      'id': summary?['workDate'] ?? status['workDate'],
       'action': out ? 'out' : 'in',
-      'clock_in': open ? status['openSince'] : today['firstInAt'],
-      'clock_out': open ? null : today['lastOutAt'],
+      'clock_in': event?['serverTime'] ??
+          (open ? status['openSince'] : today['firstInAt']),
+      'clock_out': out
+          ? (event?['serverTime'] ?? today['lastOutAt'])
+          : null,
       'status': open ? 'Working' : 'Completed',
-      'seconds': ((today['netMinutes'] as num?) ?? 0) * 60,
+      'seconds': ((summary?['netMinutes'] ?? today['netMinutes'] as num?) ??
+              0) *
+          60,
+      'event': event,
+      'summary': summary,
+      'raw': res,
     };
   }
 
@@ -486,19 +658,30 @@ class LiveGateway {
     return {'items': items, 'has_more': false};
   }
 
-  Future<Json> holidays() async {
+  Future<Json> holidays([Map<String, String>? query]) async {
+    final params = <String, dynamic>{
+      'pageSize': int.tryParse(query?['pageSize'] ?? '') ?? 500,
+      'sortBy': query?['sortBy'] ?? 'date',
+      'sortDir': query?['sortDir'] ?? 'asc',
+      if (query?['from'] != null) 'from': query!['from']!,
+      if (query?['to'] != null) 'to': query!['to']!,
+      if (query?['year'] != null) 'year': query!['year']!,
+    };
     final rows = await _items(
       'GET',
       '/holidays',
-      query: {'year': DateTime.now().year, 'pageSize': 100},
+      query: params,
     );
     final items = rows
         .map(
           (row) => {
+            ...row,
             'id': row['id'],
             'name': row['name'] ?? '',
             'date': _day(row['date']),
             'type': row['isOptional'] == true ? 'Optional' : 'Public holiday',
+            'optional': row['isOptional'] == true,
+            'isOptional': row['isOptional'] == true,
           },
         )
         .toList();
@@ -508,37 +691,54 @@ class LiveGateway {
 
   /// Approved and pending leave overlapping a range, plus holidays in it.
   Future<Json> leaveCalendar(Map<String, String> query) async {
-    final range = {'from': query['from'], 'to': query['to']};
+    final from = query['from'];
+    final to = query['to'];
+    final range = {
+      if (from != null) 'from': from,
+      if (to != null) 'to': to,
+    };
     final results = await Future.wait<dynamic>([
       fetch('GET', '/leave-requests/calendar', query: range),
       _optional(
         'GET',
         '/holidays',
-        query: {...range, 'pageSize': 500, 'sortBy': 'date', 'sortDir': 'asc'},
+        query: {
+          ...range,
+          'pageSize': 500,
+          'sortBy': 'date',
+          'sortDir': 'asc',
+        },
       ),
     ]);
     final leaves = _rows(results[0]).map((row) {
       final type = _map(row['leaveType']);
       final employee = _map(row['employee']);
       return {
+        ...row,
         'id': row['id'],
-        'start': _day(row['startDate']),
-        'end': _day(row['endDate']),
+        'start': _day(row['startDate'] ?? row['start']),
+        'end': _day(row['endDate'] ?? row['end']),
         'status': _status(row['status']),
-        'type': type['name'] ?? 'Leave',
-        'color': type['color'],
+        'type': type['name'] ?? row['type_name'] ?? 'Leave',
+        'type_code': type['code'] ?? row['type_code'] ?? '',
+        'color': type['color'] ?? row['color'],
         'days': row['days'] ?? 1,
-        'session': row['startSession'] ?? 'FULL',
-        'name': employee['fullName'] ?? '',
+        'session': row['startSession'] ?? row['session'] ?? 'FULL',
+        'name': employee['fullName'] ?? row['employee_name'] ?? '',
+        'employee_code': employee['employeeCode'] ?? '',
+        'reason': row['reason'] ?? '',
         'own': employee['id']?.toString() == _me,
       };
     }).toList();
     final holidays = _rows(results[1])
         .map(
           (row) => {
+            ...row,
+            'id': row['id'],
             'date': _day(row['date']),
             'name': row['name'] ?? 'Holiday',
             'optional': row['isOptional'] == true,
+            'isOptional': row['isOptional'] == true,
           },
         )
         .toList();
@@ -675,23 +875,34 @@ class LiveGateway {
   Json _balanceItems(dynamic data) {
     final rows = _rows(data).map((raw) {
       final type = _map(raw['leaveType']);
-      final allocation =
-          ((raw['entitled'] as num?) ?? 0) +
-          ((raw['carriedForward'] as num?) ?? 0) +
-          ((raw['adjustments'] as num?) ?? 0);
+      final entitled = (raw['entitled'] as num?) ?? 0;
+      final carriedForward = (raw['carriedForward'] as num?) ?? 0;
+      final adjustments = (raw['adjustments'] as num?) ?? 0;
+      final allocation = entitled + carriedForward + adjustments;
+      final used = (raw['used'] as num?) ?? 0;
+      final pending = (raw['pending'] as num?) ?? 0;
+      final balance = (raw['balance'] as num?) ?? (entitled - used);
+      final available = (raw['available'] as num?) ?? (balance - pending);
       return {
-        'id': type['id'] ?? raw['leaveTypeId'],
+        ...raw,
+        'id': type['id'] ?? raw['leaveTypeId'] ?? raw['id'],
         'type_id': type['id'] ?? raw['leaveTypeId'],
-        'name': type['name'] ?? 'Leave',
-        'code': type['code'] ?? '',
-        'color': type['color'],
-        'paid': type['isPaid'] != false,
+        'name': type['name'] ?? raw['name'] ?? 'Leave',
+        'code': type['code'] ?? raw['code'] ?? '',
+        'color': type['color'] ?? raw['color'],
+        'paid': type['isPaid'] ?? raw['paid'] ?? true,
         'allocation': allocation,
-        'used': raw['used'] ?? 0,
-        'reserved': raw['pending'] ?? 0,
-        'balance': raw['balance'] ?? 0,
-        'available': raw['available'] ?? 0,
+        'entitled': entitled,
+        'carried_forward': carriedForward,
+        'adjustments': adjustments,
+        'used': used,
+        'reserved': pending,
+        'pending': pending,
+        'balance': balance,
+        'available': available,
         'half_day': raw['halfDayAllowed'] == true,
+        'allow_negative': raw['allowNegativeBalance'] == true,
+        'negative_limit': (raw['negativeBalanceLimit'] as num?) ?? 0,
       };
     }).toList();
     return {'items': rows, 'has_more': false};
@@ -731,6 +942,8 @@ Json personProfile(Map user) {
   final manager = _map(employee['manager']);
   final roles = _list(user['roles']);
   final name = (employee['fullName']?.toString() ?? _person(employee)).trim();
+  final isSuperAdmin = roles.any((r) => r['code']?.toString().toUpperCase() == 'SUPER_ADMIN') ||
+      user['role']?.toString().toUpperCase() == 'SUPER_ADMIN';
   return {
     'id': employee['id'] ?? user['id'],
     'user_id': user['id'],
@@ -740,6 +953,8 @@ Json personProfile(Map user) {
     'phone': employee['phone'] ?? '',
     'role': appRole(user),
     'role_name': roles.isEmpty ? '' : roles.first['name'] ?? '',
+    'roles': roles,
+    'is_super_admin': isSuperAdmin,
     'scope': user['scope'] ?? 'SELF',
     'department': department['name'] ?? '',
     'designation': designation['title'] ?? designation['name'] ?? '',
@@ -784,21 +999,27 @@ Json leaveRequest(
   final history = _list(raw['history']);
   final department = employee['department'];
   return {
+    ..._map(raw),
     'id': raw['id'],
     'kind': 'Leave',
     'status': status,
-    'type_name': type['name'] ?? 'Leave',
-    'type_code': type['code'] ?? '',
-    'type_color': type['color'],
-    'type_id': raw['leaveTypeId'] ?? type['id'],
+    'type_name': type['name'] ?? raw['type_name'] ?? 'Leave',
+    'type_code': type['code'] ?? raw['type_code'] ?? '',
+    'type_color': type['color'] ?? raw['type_color'],
+    'type_id': raw['leaveTypeId'] ?? type['id'] ?? raw['type_id'],
     'days': raw['days'] ?? 1,
-    'start': _day(raw['startDate']),
-    'end': _day(raw['endDate']),
-    'session': raw['startSession'] ?? 'FULL',
+    'start': _day(raw['startDate'] ?? raw['start']),
+    'end': _day(raw['endDate'] ?? raw['end']),
+    'startDate': raw['startDate'] ?? raw['start'],
+    'endDate': raw['endDate'] ?? raw['end'],
+    'session': raw['startSession'] ?? raw['session'] ?? 'FULL',
     'reason': raw['reason'] ?? '',
+    'attachmentId': raw['attachmentId'],
     'user_id': employeeId,
-    'code': employee['employeeCode'] ?? '',
+    'code': employee['employeeCode'] ?? raw['code'] ?? '',
+    'employee': employee,
     'employee_name': name,
+    'designation': employee['designation'] ?? '',
     'department': department is Map
         ? department['name'] ?? ''
         : department ?? '',
@@ -807,6 +1028,8 @@ Json leaveRequest(
         : raw['approverEmployeeId'],
     'approver_name': decidedBy,
     'created': created,
+    'createdAt': raw['createdAt'] ?? created,
+    'history': history,
     'decision_note': raw['decisionComment'],
     'stage': 'manager',
     'events': history.isEmpty
@@ -823,9 +1046,10 @@ Json leaveRequest(
               {
                 'action': _status(event['action']),
                 'at': event['at'] ?? created,
-                'actor': event['byEmployeeId']?.toString() == employeeId
-                    ? name
-                    : decidedBy,
+                'actor': event['byName'] ??
+                    (event['byEmployeeId']?.toString() == employeeId
+                        ? name
+                        : decidedBy),
                 'remarks': event['comment'] ?? event['note'] ?? '',
               },
           ],

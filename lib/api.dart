@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:dio/dio.dart';
 import 'network/dio_client.dart';
 import 'network/live_gateway.dart';
@@ -95,6 +96,51 @@ class Api extends ChangeNotifier {
       (permissions.contains('task_dashboard:view') ||
           permissions.contains('tasks:view'));
 
+  bool get isSuperAdmin {
+    if (profile?['is_super_admin'] == true) return true;
+    final r = (role ?? profile?['role'])?.toString().toLowerCase() ?? '';
+    if (r == 'super_admin' || r == 'superadmin') return true;
+    final roleName = (profile?['role_name'] ?? '').toString().toLowerCase();
+    if (roleName.contains('super admin') || roleName.contains('super_admin')) {
+      return true;
+    }
+    final rolesList = profile?['roles'];
+    if (rolesList is List) {
+      for (final item in rolesList) {
+        final code = (item is Map ? item['code'] : item)
+            ?.toString()
+            .toUpperCase();
+        if (code == 'SUPER_ADMIN') return true;
+      }
+    }
+    if (permissions.contains('roles:manage') &&
+        permissions.contains('employees:create')) {
+      return true;
+    }
+    return false;
+  }
+
+  bool get isAdmin {
+    if (isSuperAdmin) return true;
+    final r = (role ?? profile?['role'])?.toString().toUpperCase() ?? '';
+    if (r == 'ADMIN' || r == 'HR') return true;
+    final roleName = (profile?['role_name'] ?? '').toString().toUpperCase();
+    if (roleName.contains('ADMIN')) return true;
+    final rolesList = profile?['roles'];
+    if (rolesList is List) {
+      for (final item in rolesList) {
+        final code = (item is Map ? item['code'] : item)
+            ?.toString()
+            .toUpperCase();
+        if (code == 'ADMIN' || code == 'SUPER_ADMIN') return true;
+      }
+    }
+    return permissions.contains('employees:create');
+  }
+
+  bool get canAddEmployee =>
+      isSuperAdmin || isAdmin || permissions.contains('employees:create');
+
   /// Applies `user` from `/auth/login`, `/auth/refresh`, or `/auth/me`.
   void applyUser(Json session) {
     role = session['role'] as String?;
@@ -111,7 +157,45 @@ class Api extends ChangeNotifier {
     String path, {
     Map<String, dynamic>? query,
     Object? body,
-  }) => LiveGateway(this).fetch(method, path, query: query, body: body);
+  }) async {
+    if (live) {
+      return LiveGateway(this).fetch(method, path, query: query, body: body);
+    }
+    final url = Uri.parse(
+      '$base$path',
+    ).replace(queryParameters: query?.map((k, v) => MapEntry(k, v.toString())));
+    final headers = {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+    final response = await (method == 'GET'
+        ? client.get(url, headers: headers)
+        : method == 'POST'
+        ? client.post(url, headers: headers, body: jsonEncode(body))
+        : method == 'PATCH'
+        ? client.patch(url, headers: headers, body: jsonEncode(body))
+        : method == 'PUT'
+        ? client.put(url, headers: headers, body: jsonEncode(body))
+        : method == 'DELETE'
+        ? client.delete(
+            url,
+            headers: headers,
+            body: body != null ? jsonEncode(body) : null,
+          )
+        : client.send(
+            http.Request(method, url)
+              ..headers.addAll(headers)
+              ..body = body != null ? jsonEncode(body) : '',
+          ));
+    final bodyStr = response is http.Response
+        ? response.body
+        : await (response as http.StreamedResponse).stream.bytesToString();
+    final dynamic res = jsonDecode(bodyStr);
+    if (res is Map && res['success'] == true && res.containsKey('data')) {
+      return res['data'];
+    }
+    return res;
+  }
 
   Future<void> restore() async {
     token = await storage.read(key: 'session');
@@ -161,6 +245,44 @@ class Api extends ChangeNotifier {
     }
   }
 
+  Future<List<String>> getRecentEmails() async {
+    final raw = await storage.read(key: 'recent_emails');
+    if (raw != null && raw.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(raw);
+        if (decoded is List) {
+          final list = decoded
+              .map((e) => e?.toString().trim() ?? '')
+              .where((e) => e.isNotEmpty)
+              .toList();
+          if (list.isNotEmpty) return list;
+        }
+      } catch (_) {}
+    }
+    final last = await storage.read(key: 'last_id');
+    if (last != null && last.trim().isNotEmpty) {
+      return [last.trim()];
+    }
+    return const [];
+  }
+
+  Future<void> saveRecentEmail(String email) async {
+    final clean = email.trim();
+    if (clean.isEmpty) return;
+    final current = await getRecentEmails();
+    final updated = <String>[clean];
+    for (final item in current) {
+      if (item.toLowerCase() != clean.toLowerCase()) {
+        updated.add(item);
+      }
+    }
+    if (updated.length > 5) {
+      updated.removeRange(5, updated.length);
+    }
+    await storage.write(key: 'recent_emails', value: jsonEncode(updated));
+    await storage.write(key: 'last_id', value: clean);
+  }
+
   Future<void> login(String id, String password) async {
     if (live) {
       final session = await LiveGateway(this).login(id, password);
@@ -172,7 +294,7 @@ class Api extends ChangeNotifier {
       if (refreshToken != null) {
         await storage.write(key: 'refresh', value: refreshToken);
       }
-      await storage.write(key: 'last_id', value: id.trim());
+      await saveRecentEmail(id);
       notifyListeners();
       return;
     }
@@ -194,7 +316,7 @@ class Api extends ChangeNotifier {
     profile = r['profile'] as Json;
     officeTimezone = profile!['office']['timezone'];
     await storage.write(key: 'session', value: token);
-    await storage.write(key: 'last_id', value: profile!['id'] as String);
+    await saveRecentEmail(id);
     notifyListeners();
   }
 
@@ -271,6 +393,62 @@ class Api extends ChangeNotifier {
       call('GET', path, query: query);
   Future<Json> post(String path, Json body) => call('POST', path, body: body);
   Future<Json> patch(String path, Json body) => call('PATCH', path, body: body);
+
+  Future<Json> changePassword(
+    String currentPassword,
+    String newPassword,
+  ) async {
+    final res = await post('/auth/change-password', {
+      'currentPassword': currentPassword,
+      'newPassword': newPassword,
+    });
+    final newAccessToken =
+        res['accessToken']?.toString() ??
+        (res['data'] is Map
+            ? (res['data'] as Map)['accessToken']?.toString()
+            : null);
+    final newRefreshToken =
+        res['refresh']?.toString() ??
+        res['refreshToken']?.toString() ??
+        (res['data'] is Map
+            ? (res['data'] as Map)['refreshToken']?.toString()
+            : null);
+    if (newAccessToken != null && newAccessToken.isNotEmpty) {
+      token = newAccessToken;
+      await storage.write(key: 'session', value: newAccessToken);
+      if (newRefreshToken != null && newRefreshToken.isNotEmpty) {
+        refreshToken = newRefreshToken;
+        await storage.write(key: 'refresh', value: newRefreshToken);
+      }
+      notifyListeners();
+    }
+    return res;
+  }
+
+  Future<Json> updatePreferences(Map<String, dynamic> prefs) async {
+    final res = await patch('/auth/me/preferences', {'preferences': prefs});
+    final newAccessToken =
+        res['accessToken']?.toString() ??
+        (res['data'] is Map
+            ? (res['data'] as Map)['accessToken']?.toString()
+            : null);
+    final newRefreshToken =
+        res['refresh']?.toString() ??
+        res['refreshToken']?.toString() ??
+        (res['data'] is Map
+            ? (res['data'] as Map)['refreshToken']?.toString()
+            : null);
+    if (newAccessToken != null && newAccessToken.isNotEmpty) {
+      token = newAccessToken;
+      await storage.write(key: 'session', value: newAccessToken);
+      if (newRefreshToken != null && newRefreshToken.isNotEmpty) {
+        refreshToken = newRefreshToken;
+        await storage.write(key: 'refresh', value: newRefreshToken);
+      }
+      notifyListeners();
+    }
+    return res;
+  }
 
   /// Geofence check against the capture rules from `/attendance/status`.
   /// The server has no endpoint for this, so it runs on the device.
@@ -353,6 +531,12 @@ class Api extends ChangeNotifier {
       final response =
           await (method == 'GET'
                   ? client.get(url, headers: headers)
+                  : method == 'PATCH'
+                  ? client.patch(
+                      url,
+                      headers: headers,
+                      body: jsonEncode(body ?? {}),
+                    )
                   : client.post(
                       url,
                       headers: headers,
@@ -461,6 +645,8 @@ class Api extends ChangeNotifier {
         },
         null,
       );
+    case ('POST', '/leave-requests/preview'):
+      return ('POST', '/leave/preview', b, null);
     case ('POST', '/attendance/check-in'):
     case ('POST', '/attendance/check-out'):
       return (
@@ -499,13 +685,88 @@ class Api extends ChangeNotifier {
       null,
     );
   }
+  if (parts.length == 3 && parts[0] == 'files' && parts[2] == 'url') {
+    return ('GET', '/files/${parts[1]}/url', null, null);
+  }
   if (method == 'PATCH' && parts.length == 3 && parts[0] == 'notifications') {
     return ('POST', path, b, null);
   }
   return (method, path, body, query);
 }
 
-Future<Json> captureLocation() async {
+bool _geocodingAvailable = true;
+Geocoding? _geocodingInstance;
+
+Future<String> resolveLocationName(
+  double latitude,
+  double longitude, {
+  Map<String, dynamic>? rules,
+}) async {
+  if (_geocodingAvailable) {
+    try {
+      _geocodingInstance ??= Geocoding();
+      final placemarks = await _geocodingInstance!
+          .placemarkFromCoordinates(latitude, longitude)
+          .timeout(const Duration(milliseconds: 1500));
+      if (placemarks.isNotEmpty) {
+        final p = placemarks.first;
+        final parts = <String>[];
+        final street = p.street?.trim() ?? '';
+        final name = p.name?.trim() ?? '';
+        final subLocality = p.subLocality?.trim() ?? '';
+        final locality = p.locality?.trim() ?? '';
+        final admin = p.administrativeArea?.trim() ?? '';
+
+        if (street.isNotEmpty &&
+            !street.contains('+') &&
+            !RegExp(r'^\d+$').hasMatch(street)) {
+          parts.add(street);
+        } else if (name.isNotEmpty &&
+            !name.contains('+') &&
+            !RegExp(r'^\d+$').hasMatch(name)) {
+          parts.add(name);
+        }
+        if (subLocality.isNotEmpty && !parts.contains(subLocality)) {
+          parts.add(subLocality);
+        }
+        if (locality.isNotEmpty && !parts.contains(locality)) {
+          parts.add(locality);
+        }
+        if (admin.isNotEmpty && !parts.contains(admin)) {
+          parts.add(admin);
+        }
+        if (parts.isNotEmpty) {
+          return parts.join(', ');
+        }
+      }
+    } catch (_) {
+      // Disables native geocoding if channel is not connected or fails
+      _geocodingAvailable = false;
+    }
+  }
+
+  if (rules != null && rules['sites'] is List) {
+    for (final s in rules['sites'] as List) {
+      if (s is Map && s['name'] != null) {
+        final sLat = (s['latitude'] as num?)?.toDouble();
+        final sLon = (s['longitude'] as num?)?.toDouble();
+        if (sLat != null && sLon != null) {
+          final dLat = (sLat - latitude).abs();
+          final dLon = (sLon - longitude).abs();
+          if (dLat < 0.005 && dLon < 0.005) {
+            return s['name'].toString();
+          }
+        }
+      }
+    }
+  }
+
+  final latDir = latitude >= 0 ? 'N' : 'S';
+  final lonDir = longitude >= 0 ? 'E' : 'W';
+  return '${latitude.abs().toStringAsFixed(4)}° $latDir, ${longitude.abs().toStringAsFixed(4)}° $lonDir';
+}
+
+Future<Json> captureLocation({Map<String, dynamic>? rules}) async {
   if (!await Geolocator.isLocationServiceEnabled()) {
     throw ApiFailure('Location services are off. Enable them in Settings.');
   }
@@ -527,10 +788,19 @@ Future<Json> captureLocation() async {
       timeLimit: Duration(seconds: 20),
     ),
   );
+  String locationName = '';
+  try {
+    locationName = await resolveLocationName(
+      p.latitude,
+      p.longitude,
+      rules: rules,
+    );
+  } catch (_) {}
   return {
     'latitude': p.latitude,
     'longitude': p.longitude,
     'accuracy': p.accuracy,
+    'location_name': locationName,
     'captured_at': p.timestamp.toUtc().toIso8601String(),
     'mocked': p.isMocked,
   };

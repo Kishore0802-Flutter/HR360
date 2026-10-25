@@ -1,10 +1,15 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'api.dart';
+import 'clock_in.dart';
 import 'design.dart';
 import 'directory.dart';
 import 'nav.dart';
+import 'regularisations.dart';
 import 'requests.dart';
 
 enum AttendanceFilter {
@@ -265,15 +270,6 @@ class _AttendancePageState extends State<AttendancePage> {
     final holidays = ((totals['holidays'] as num?) ?? 0).toInt();
 
     final now = DateTime.now();
-    final currentDay =
-        selected ?? DateTime(focus.year, focus.month, 1);
-    final selectedDayData = daysByDate[dateOnly(currentDay)];
-
-    final firstIn = selectedDayData?['firstInAt']?.toString();
-    final lastOut = selectedDayData?['lastOutAt']?.toString();
-    final isWorking =
-        selectedDayData?['hasOpenSession'] == true ||
-        (firstIn != null && lastOut == null);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
@@ -306,6 +302,19 @@ class _AttendancePageState extends State<AttendancePage> {
                           TextStyle(color: Color(0xFF8E99A8), fontSize: 11),
                     ),
                   ],
+                ),
+              ),
+              IconButton(
+                tooltip: 'Holidays',
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => HolidaysPage(api: widget.api),
+                  ),
+                ),
+                icon: const Icon(
+                  Icons.beach_access_outlined,
+                  color: Color(0xFF1B3A4B),
                 ),
               ),
               IconButton(
@@ -441,288 +450,249 @@ class _AttendancePageState extends State<AttendancePage> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          // 2nd: Calendar Card
-          _AttendanceCard(
-            child: Column(
+          const SizedBox(height: 14),
+          // Attendance Regularisations & Correction banner
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFDF6F0),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFE8D3C5), width: 1.2),
+            ),
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.calendar_month_outlined,
-                      size: 18,
-                      color: Color(0xFF1B3A4B),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      _monthTitle(focus),
-                      style: const TextStyle(
-                        color: Color(0xFF1B2A4A),
-                        fontWeight: FontWeight.w800,
-                        fontSize: 15,
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFBE5E38),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.edit_calendar_outlined,
+                    size: 16,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Regularisations',
+                        style: TextStyle(
+                          color: Color(0xFF1B2A4A),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13.5,
+                        ),
                       ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      tooltip: 'Previous month',
-                      onPressed: () => shiftMonth(-1),
-                      icon: const Icon(Icons.chevron_left),
-                    ),
-                    IconButton(
-                      tooltip: 'Next month',
-                      onPressed: () => shiftMonth(1),
-                      icon: const Icon(Icons.chevron_right),
-                    ),
-                  ],
+                      Text(
+                        'View requests & correction history',
+                        style: TextStyle(
+                          color: Color(0xFF8B93A7),
+                          fontSize: 11.5,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const Row(
-                  children: [
-                    _WeekLabel('Sun'),
-                    _WeekLabel('Mon'),
-                    _WeekLabel('Tue'),
-                    _WeekLabel('Wed'),
-                    _WeekLabel('Thu'),
-                    _WeekLabel('Fri'),
-                    _WeekLabel('Sat'),
-                  ],
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => RegularisationsPage(api: widget.api),
+                      ),
+                    );
+                    if (mounted) load();
+                  },
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFE8D3C5)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.list_alt_rounded, size: 14, color: Color(0xFFBE5E38)),
+                        SizedBox(width: 4),
+                        Text(
+                          'Requests',
+                          style: TextStyle(
+                            color: Color(0xFFBE5E38),
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 6),
-                _MonthGrid(
-                  month: focus,
-                  selected: currentDay,
-                  markFor: markFor,
-                  onPick: openDay,
+                const SizedBox(width: 6),
+                InkWell(
+                  onTap: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => CorrectionPage(api: widget.api, day: now),
+                      ),
+                    );
+                    if (mounted) load();
+                  },
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFBE5E38),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.add, size: 14, color: Colors.white),
+                        SizedBox(width: 3),
+                        Text(
+                          'Add',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 8),
-                const Wrap(
-                  spacing: 14,
-                  runSpacing: 6,
-                  children: [
-                    _LegendDot(
-                      color: Color(0xFF1B7F56),
-                      label: 'Present',
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          // Holidays container banner
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0FDF4),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFBBF7D0), width: 1.2),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF16A34A),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.beach_access_rounded,
+                    size: 16,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Holidays',
+                        style: TextStyle(
+                          color: Color(0xFF1B2A4A),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13.5,
+                        ),
+                      ),
+                      Text(
+                        'Company calendar & list of holidays',
+                        style: TextStyle(
+                          color: Color(0xFF8B93A7),
+                          fontSize: 11.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => HolidaysPage(api: widget.api),
                     ),
-                    _LegendDot(
-                      color: Color(0xFFE15B64),
-                      label: 'Absent',
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
                     ),
-                    _LegendDot(
-                      color: Color(0xFF3B82F6),
-                      label: 'Late',
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFBBF7D0)),
                     ),
-                    _LegendDot(
-                      color: Color(0xFFC5CAD3),
-                      label: 'Holiday',
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.calendar_today_rounded, size: 13, color: Color(0xFF16A34A)),
+                        SizedBox(width: 4),
+                        Text(
+                          'View',
+                          style: TextStyle(
+                            color: Color(0xFF16A34A),
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                     ),
-                    _LegendDot(
-                      color: Color(0xFFF59E0B),
-                      label: 'Leave',
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 14),
-          // Selected Day Log
-          _AttendanceCard(
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.event_note_outlined,
-                      size: 18,
-                      color: Color(0xFF1B3A4B),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        _sameDay(currentDay, now)
-                            ? "Today's Log"
-                            : 'Day log',
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Color(0xFF1B2A4A),
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    InkWell(
-                      onTap: () => openDay(currentDay),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 4,
-                          vertical: 8,
-                        ),
-                        child: Text(
-                          '${_shortDay(currentDay)} >',
-                          style: const TextStyle(
-                            color: Color(0xFF8B93A7),
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+          // Today's log in separate container
+          _TodayLogContainer(
+            api: widget.api,
+            today: now,
+            todayData: (data?['day'] is Map
+                    ? (data!['day'] as Map).cast<String, dynamic>()
+                    : null) ??
+                daysByDate[dateOnly(now)] ??
+                (home?['today'] is Map
+                    ? (home!['today'] as Map).cast<String, dynamic>()
+                    : null),
+            sessions: (data?['sessions'] as List?) ?? const [],
+            events: (data?['events'] as List?) ?? const [],
+            officeName: _officeName(widget.api.profile ?? {}),
+            onCorrection: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => CorrectionPage(
+                    api: widget.api,
+                    day: now,
+                    record: (data?['day'] is Map
+                            ? (data!['day'] as Map).cast<String, dynamic>()
+                            : null) ??
+                        daysByDate[dateOnly(now)],
+                  ),
                 ),
-                if (selectedDayData == null)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                    child: Text(
-                      'No attendance recorded for this day.',
-                      style:
-                          TextStyle(color: Color(0xFF8B93A7), fontSize: 13),
-                    ),
-                  )
-                else if (firstIn != null) ...[
-                  _LogRow(
-                    icon: Icons.login_rounded,
-                    iconColor: const Color(0xFF1B7F56),
-                    iconBackground: const Color(0xFFE7F6EE),
-                    title: 'Clock In',
-                    time: clockText(firstIn),
-                    office: _officeName(widget.api.profile ?? {}),
-                    place: 'Inside office (Geofence)',
-                    badge: isWorking
-                        ? 'Working'
-                        : (selectedDayData['isLate'] == true
-                            ? 'Late'
-                            : 'Present'),
-                    badgeColor: const Color(0xFF1B7F56),
-                    badgeBackground: const Color(0xFFE7F6EE),
-                  ),
-                  if (lastOut != null)
-                    _LogRow(
-                      icon: Icons.logout_rounded,
-                      iconColor: const Color(0xFFE15B64),
-                      iconBackground: const Color(0xFFFDECEC),
-                      title: 'Clock Out',
-                      time: clockText(lastOut),
-                      office: _officeName(widget.api.profile ?? {}),
-                      place: 'Inside office (Geofence)',
-                      badge: 'Completed',
-                      badgeColor: const Color(0xFF6E7C8A),
-                      badgeBackground: const Color(0xFFF1F3F6),
-                    ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Net worked: ${_looseDuration(((selectedDayData['netMinutes'] as num?) ?? 0) * 60)}',
-                          style: const TextStyle(
-                            color: Color(0xFF8B93A7),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      if (selectedDayData['isLate'] == true &&
-                          ((selectedDayData['lateMinutes'] as num?) ?? 0) >
-                              0) ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFBF4E8),
-                            borderRadius: BorderRadius.circular(8),
-                            border:
-                                Border.all(color: const Color(0xFFEFE2CB)),
-                          ),
-                          child: Text(
-                            '${selectedDayData['lateMinutes']} min late',
-                            style: const TextStyle(
-                              color: Color(0xFF946522),
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ] else ...[
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: selectedDayData['status'] == 'ABSENT'
-                                ? const Color(0xFFFDECEC)
-                                : const Color(0xFFF4F6F8),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            selectedDayData['status'] == 'ABSENT'
-                                ? Icons.cancel_outlined
-                                : selectedDayData['status'] == 'HOLIDAY'
-                                ? Icons.celebration_outlined
-                                : selectedDayData['status'] == 'WEEKEND'
-                                ? Icons.weekend_outlined
-                                : Icons.beach_access_outlined,
-                            size: 18,
-                            color: selectedDayData['status'] == 'ABSENT'
-                                ? const Color(0xFFE15B64)
-                                : const Color(0xFF8B93A7),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                switch (selectedDayData['status']
-                                    ?.toString()
-                                    .toUpperCase()) {
-                                  'ABSENT' => 'Marked Absent',
-                                  'HOLIDAY' =>
-                                    selectedDayData['holiday']
-                                            ?.toString() ??
-                                        'Holiday',
-                                  'WEEKEND' => 'Weekend / Weekly Off',
-                                  'ON_LEAVE' || 'HALF_DAY_LEAVE' =>
-                                    selectedDayData['leaveType']
-                                            ?.toString() ??
-                                        'On Leave',
-                                  _ => 'No record',
-                                },
-                                style: const TextStyle(
-                                  color: Color(0xFF1B2A4A),
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              Text(
-                                selectedDayData['status'] == 'ABSENT'
-                                    ? 'No attendance was recorded'
-                                    : _fullDate(currentDay),
-                                style: const TextStyle(
-                                  color: Color(0xFF8B93A7),
-                                  fontSize: 11.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (selectedDayData['status'] == 'ABSENT')
-                          TextButton(
-                            onPressed: () => openDay(currentDay),
-                            child: const Text('Regularize'),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-              ],
-            ),
+              );
+              if (mounted) load();
+            },
+            onOpenDay: () => openDay(now),
           ),
           const SizedBox(height: 14),
           // Attendance History Logs
@@ -773,10 +743,50 @@ class _AttendancePageState extends State<AttendancePage> {
                           ],
                         ),
                       ),
-                      _DateFilterButton(
-                        current: filter,
-                        range: customRange,
-                        onSelected: onFilterPicked,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            visualDensity: VisualDensity.compact,
+                            iconSize: 18,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 26,
+                              minHeight: 26,
+                            ),
+                            tooltip: 'Previous month',
+                            onPressed: () => shiftMonth(-1),
+                            icon: const Icon(
+                              Icons.chevron_left_rounded,
+                              color: Color(0xFF6E5C49),
+                            ),
+                          ),
+                          _DateFilterButton(
+                            current: filter,
+                            range: customRange,
+                            focus: focus,
+                            onMonthSelected: (m) {
+                              focus = m;
+                              load(newFilter: AttendanceFilter.thisMonth);
+                            },
+                            onSelected: onFilterPicked,
+                          ),
+                          IconButton(
+                            visualDensity: VisualDensity.compact,
+                            iconSize: 18,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 26,
+                              minHeight: 26,
+                            ),
+                            tooltip: 'Next month',
+                            onPressed: () => shiftMonth(1),
+                            icon: const Icon(
+                              Icons.chevron_right_rounded,
+                              color: Color(0xFF6E5C49),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -891,9 +901,6 @@ String _shortDay(DateTime date) {
   ];
   return '${date.day.toString().padLeft(2, '0')} ${months[date.month - 1]} ${date.year}';
 }
-
-bool _sameDay(DateTime a, DateTime? b) =>
-    b != null && a.year == b.year && a.month == b.month && a.day == b.day;
 
 String? _latestOut(List<Json> rows) {
   if (rows.any((row) => row['clock_out'] == null)) return null;
@@ -1323,18 +1330,909 @@ class _TableRowWidget extends StatelessWidget {
   }
 }
 
-class _DateFilterButton extends StatelessWidget {
-  final AttendanceFilter current;
-  final DateTimeRange? range;
-  final ValueChanged<AttendanceFilter> onSelected;
-  const _DateFilterButton({
-    required this.current,
-    this.range,
-    required this.onSelected,
+void _showSelfieDialog(BuildContext context, String photo, String title) {
+  showDialog<void>(
+    context: context,
+    builder: (ctx) => Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 8, 10),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.camera_alt_outlined,
+                  size: 18,
+                  color: Color(0xFF1B7F56),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      color: Color(0xFF1B2A4A),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 18),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ],
+            ),
+          ),
+          ClipRRect(
+            borderRadius:
+                const BorderRadius.vertical(bottom: Radius.circular(16)),
+            child: photo.startsWith('http')
+                ? Image.network(
+                    photo,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const Padding(
+                      padding: EdgeInsets.all(32),
+                      child: Center(child: Text('Image unavailable')),
+                    ),
+                  )
+                : Image.file(
+                    File(photo),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const Padding(
+                      padding: EdgeInsets.all(32),
+                      child: Center(child: Text('Image unavailable')),
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _TodayLogContainer extends StatelessWidget {
+  final Api api;
+  final DateTime today;
+  final Json? todayData;
+  final List<dynamic> sessions;
+  final List<dynamic> events;
+  final String officeName;
+  final VoidCallback onCorrection;
+  final VoidCallback onOpenDay;
+
+  const _TodayLogContainer({
+    required this.api,
+    required this.today,
+    this.todayData,
+    this.sessions = const [],
+    this.events = const [],
+    required this.officeName,
+    required this.onCorrection,
+    required this.onOpenDay,
   });
 
   @override
   Widget build(BuildContext context) {
+    final status = (todayData?['status']?.toString().toUpperCase() ??
+        (today.weekday >= 6 ? 'WEEKEND' : 'NONE'));
+    final isWeekend = status == 'WEEKEND';
+    final isHoliday = status == 'HOLIDAY';
+    final isLeave = status == 'ON_LEAVE' || status == 'HALF_DAY_LEAVE';
+    final firstIn = todayData?['firstInAt']?.toString() ??
+        todayData?['clock_in']?.toString();
+    final lastOut = todayData?['lastOutAt']?.toString() ??
+        todayData?['clock_out']?.toString();
+    final isWorking = todayData?['hasOpenSession'] == true ||
+        (firstIn != null && lastOut == null);
+    final isLate = todayData?['isLate'] == true;
+    final lateMinutes = ((todayData?['lateMinutes'] as num?) ?? 0).toInt();
+    final netMinutes = ((todayData?['netMinutes'] as num?) ?? 0).toInt();
+    final sessionsCount = (todayData?['sessionsCount'] as num?)?.toInt() ??
+        (sessions.isNotEmpty ? sessions.length : 1);
+    final completedSessions =
+        (todayData?['completedSessions'] as num?)?.toInt() ??
+            (lastOut != null ? 1 : 0);
+
+    final inPhoto = (todayData?['in_photo'] ??
+            todayData?['inPhotoUrl'] ??
+            todayData?['photoUrl'] ??
+            (events.isNotEmpty
+                ? events.first['photoUrl'] ?? events.first['photo']
+                : null))
+        ?.toString();
+    final outPhoto = (todayData?['out_photo'] ??
+            todayData?['outPhotoUrl'] ??
+            (events.length > 1
+                ? events.last['photoUrl'] ?? events.last['photo']
+                : null))
+        ?.toString();
+
+    // 1. Weekend UI
+    if (isWeekend) {
+      return Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFF3F0FF), Color(0xFFFAF8FE)],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFE5DDF8), width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF7C6BF2).withValues(alpha: 0.06),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.weekend_outlined,
+                  size: 18,
+                  color: Color(0xFF6B5BD6),
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    "Today's Log",
+                    style: TextStyle(
+                      color: Color(0xFF1B2A4A),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFE9FD),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFDACDF9)),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.circle,
+                        size: 7,
+                        color: Color(0xFF6B5BD6),
+                      ),
+                      SizedBox(width: 5),
+                      Text(
+                        'Weekend',
+                        style: TextStyle(
+                          color: Color(0xFF6B5BD6),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 11.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Container(
+                  width: 54,
+                  height: 54,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFEFE9FD),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.beach_access_rounded,
+                    size: 28,
+                    color: Color(0xFF6B5BD6),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "It's the Weekend!",
+                        style: TextStyle(
+                          color: Color(0xFF2E236C),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                        ),
+                      ),
+                      SizedBox(height: 3),
+                      Text(
+                        'No attendance required today. Time to relax, recharge, and enjoy your time off!',
+                        style: TextStyle(
+                          color: Color(0xFF6E7C8A),
+                          fontSize: 12.5,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.85),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFEBE5F7)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.spa_outlined,
+                    size: 15,
+                    color: Color(0xFF6B5BD6),
+                  ),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Relax and enjoy! Shifts resume on Monday.',
+                      style: TextStyle(
+                        color: Color(0xFF4C3E96),
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: onCorrection,
+                    child: const Text(
+                      'Log hours >',
+                      style: TextStyle(
+                        color: Color(0xFFBE5E38),
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // 2. Holiday UI
+    if (isHoliday) {
+      final holidayName =
+          todayData?['holiday']?.toString() ?? 'Public Holiday';
+      return Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFFFF9E6), Color(0xFFFFFDF5)],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFFDE68A), width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFD97706).withValues(alpha: 0.06),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.celebration_outlined,
+                  size: 18,
+                  color: Color(0xFFD97706),
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    "Today's Log",
+                    style: TextStyle(
+                      color: Color(0xFF1B2A4A),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFFDE68A)),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.circle,
+                        size: 7,
+                        color: Color(0xFFD97706),
+                      ),
+                      SizedBox(width: 5),
+                      Text(
+                        'Holiday',
+                        style: TextStyle(
+                          color: Color(0xFFB45309),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 11.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Container(
+                  width: 54,
+                  height: 54,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFEF3C7),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.celebration_rounded,
+                    size: 28,
+                    color: Color(0xFFD97706),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        holidayName,
+                        style: const TextStyle(
+                          color: Color(0xFF92400E),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      const Text(
+                        'Office is closed today in celebration of this holiday. Have a wonderful time!',
+                        style: TextStyle(
+                          color: Color(0xFF78350F),
+                          fontSize: 12.5,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    // 3. On Leave UI
+    if (isLeave) {
+      final leaveName = todayData?['leaveType']?.toString() ?? 'On Leave';
+      return Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFFBEB),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFFDE68A), width: 1.2),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: const BoxDecoration(
+                color: Color(0xFFFEF3C7),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.beach_access_rounded,
+                size: 24,
+                color: Color(0xFFD97706),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    leaveName,
+                    style: const TextStyle(
+                      color: Color(0xFF92400E),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  const Text(
+                    'You are on approved leave for today.',
+                    style: TextStyle(
+                      color: Color(0xFF78350F),
+                      fontSize: 12.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // 4. Regular work day: Clocked in / Present / Late
+    if (firstIn != null) {
+      return _AttendanceCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.access_time_rounded,
+                  size: 18,
+                  color: Color(0xFF1B3A4B),
+                ),
+                const SizedBox(width: 6),
+                const Expanded(
+                  child: Text(
+                    "Today's Log",
+                    style: TextStyle(
+                      color: Color(0xFF1B2A4A),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isWorking
+                        ? const Color(0xFFE7F6EE)
+                        : (isLate
+                            ? const Color(0xFFEAF1FF)
+                            : const Color(0xFFE7F6EE)),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.circle,
+                        size: 7,
+                        color: isWorking
+                            ? const Color(0xFF1B7F56)
+                            : (isLate
+                                ? const Color(0xFF3B82F6)
+                                : const Color(0xFF1B7F56)),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        isWorking
+                            ? 'Working'
+                            : (isLate ? 'Late' : 'Present'),
+                        style: TextStyle(
+                          color: isWorking
+                              ? const Color(0xFF1B7F56)
+                              : (isLate
+                                  ? const Color(0xFF3B82F6)
+                                  : const Color(0xFF1B7F56)),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 11.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _LogRow(
+              icon: Icons.login_rounded,
+              iconColor: const Color(0xFF1B7F56),
+              iconBackground: const Color(0xFFE7F6EE),
+              title: 'Clock In',
+              time: clockText(firstIn),
+              office: officeName,
+              place: 'Inside office (Geofence)',
+              badge: isWorking
+                  ? 'Working'
+                  : (isLate ? 'Late' : 'Present'),
+              badgeColor: const Color(0xFF1B7F56),
+              badgeBackground: const Color(0xFFE7F6EE),
+            ),
+            if (inPhoto != null && inPhoto.isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.only(left: 48, bottom: 6),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => _showSelfieDialog(
+                        context,
+                        inPhoto,
+                        'Clock In Selfie',
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE7F6EE),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFCEECD9)),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.camera_alt_outlined,
+                              size: 13,
+                              color: Color(0xFF1B7F56),
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'View Selfie',
+                              style: TextStyle(
+                                color: Color(0xFF1B7F56),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            if (lastOut != null) ...[
+              _LogRow(
+                icon: Icons.logout_rounded,
+                iconColor: const Color(0xFFE15B64),
+                iconBackground: const Color(0xFFFDECEC),
+                title: 'Clock Out',
+                time: clockText(lastOut),
+                office: officeName,
+                place: 'Inside office (Geofence)',
+                badge: 'Completed',
+                badgeColor: const Color(0xFF6E7C8A),
+                badgeBackground: const Color(0xFFF1F3F6),
+              ),
+              if (outPhoto != null && outPhoto.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.only(left: 48, bottom: 6),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => _showSelfieDialog(
+                          context,
+                          outPhoto,
+                          'Clock Out Selfie',
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFDECEC),
+                            borderRadius: BorderRadius.circular(8),
+                            border:
+                                Border.all(color: const Color(0xFFF7D1D1)),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.camera_alt_outlined,
+                                size: 13,
+                                color: Color(0xFFE15B64),
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                'View Selfie',
+                                style: TextStyle(
+                                  color: Color(0xFFE15B64),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ] else if (isWorking)
+              Padding(
+                padding: const EdgeInsets.only(top: 8, bottom: 4),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Session currently active',
+                        style: TextStyle(
+                          color: Color(0xFF8B93A7),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () => openRoute(
+                        context,
+                        '/clock-out',
+                        () => ClockInPage(api: api, action: 'out'),
+                      ),
+                      icon: const Icon(Icons.logout_rounded, size: 15),
+                      label: const Text('Clock Out'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFE15B64),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 6,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Net worked: ${_looseDuration(netMinutes * 60)}  •  $completedSessions/$sessionsCount sessions',
+                    style: const TextStyle(
+                      color: Color(0xFF8B93A7),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                if (isLate && lateMinutes > 0) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFBF4E8),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFEFE2CB)),
+                    ),
+                    child: Text(
+                      lateMinutes < 60
+                          ? '$lateMinutes min late'
+                          : lateMinutes % 60 == 0
+                              ? '${lateMinutes ~/ 60}h late'
+                              : '${lateMinutes ~/ 60}h ${lateMinutes % 60}m late',
+                      style: const TextStyle(
+                        color: Color(0xFF946522),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                InkWell(
+                  onTap: onCorrection,
+                  child: const Text(
+                    'Request correction',
+                    style: TextStyle(
+                      color: Color(0xFFBE5E38),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    // 5. Work day, not clocked in yet or Absent
+    final isAbsent = status == 'ABSENT';
+    return _AttendanceCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.access_time_rounded,
+                size: 18,
+                color: Color(0xFF1B3A4B),
+              ),
+              const SizedBox(width: 6),
+              const Expanded(
+                child: Text(
+                  "Today's Log",
+                  style: TextStyle(
+                    color: Color(0xFF1B2A4A),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+              Text(
+                _shortDay(today),
+                style: const TextStyle(
+                  color: Color(0xFF8B93A7),
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: isAbsent
+                      ? const Color(0xFFFDECEC)
+                      : const Color(0xFFE7F6EE),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isAbsent
+                      ? Icons.cancel_outlined
+                      : Icons.fingerprint_rounded,
+                  size: 22,
+                  color: isAbsent
+                      ? const Color(0xFFE15B64)
+                      : const Color(0xFF1B7F56),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isAbsent
+                          ? 'Marked Absent'
+                          : 'Not checked in yet today',
+                      style: const TextStyle(
+                        color: Color(0xFF1B2A4A),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                      ),
+                    ),
+                    Text(
+                      isAbsent
+                          ? 'No attendance was recorded for today.'
+                          : 'Don\'t forget to clock in when you arrive at the office.',
+                      style: const TextStyle(
+                        color: Color(0xFF8B93A7),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.end,
+            children: [
+              if (!isAbsent)
+                FilledButton.icon(
+                  onPressed: () => openRoute(
+                    context,
+                    '/clock-in',
+                    () => ClockInPage(api: api, action: 'in'),
+                  ),
+                  icon: const Icon(Icons.login_rounded, size: 16),
+                  label: const Text('Clock In Now'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF1B7F56),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              OutlinedButton.icon(
+                onPressed: onCorrection,
+                icon: const Icon(
+                  Icons.edit_calendar_outlined,
+                  size: 16,
+                  color: Color(0xFFBE5E38),
+                ),
+                label: const Text(
+                  'Add correction',
+                  style: TextStyle(
+                    color: Color(0xFFBE5E38),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFFE8D3C5)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DateFilterButton extends StatelessWidget {
+  final AttendanceFilter current;
+  final DateTimeRange? range;
+  final DateTime? focus;
+  final ValueChanged<AttendanceFilter> onSelected;
+  final ValueChanged<DateTime>? onMonthSelected;
+  const _DateFilterButton({
+    required this.current,
+    this.range,
+    this.focus,
+    required this.onSelected,
+    this.onMonthSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final currentFocus = focus ?? now;
+    final monthsList = <DateTime>[];
+    for (int i = 0; i < 12; i++) {
+      monthsList.add(DateTime(now.year, now.month - i, 1));
+    }
+
     return PopupMenuButton<AttendanceFilter>(
       onSelected: onSelected,
       color: const Color(0xFFFAF7F2),
@@ -1345,11 +2243,73 @@ class _DateFilterButton extends StatelessWidget {
       ),
       offset: const Offset(0, 42),
       itemBuilder: (context) => [
-        _menuItem(AttendanceFilter.thisWeek, 'This week', current),
-        _menuItem(AttendanceFilter.thisMonth, 'This month', current),
-        _menuItem(AttendanceFilter.last30Days, 'Last 30 days', current),
+        const PopupMenuItem<AttendanceFilter>(
+          enabled: false,
+          height: 28,
+          child: Text(
+            'PAST MONTHS',
+            style: TextStyle(
+              color: Color(0xFF8B93A7),
+              fontSize: 10.5,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.8,
+            ),
+          ),
+        ),
+        for (final m in monthsList)
+          PopupMenuItem<AttendanceFilter>(
+            value: AttendanceFilter.thisMonth,
+            height: 38,
+            onTap: () => onMonthSelected?.call(m),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    m.month == now.month && m.year == now.year
+                        ? '${_monthTitle(m)} (Current)'
+                        : _monthTitle(m),
+                    style: TextStyle(
+                      color: (current == AttendanceFilter.thisMonth &&
+                              currentFocus.year == m.year &&
+                              currentFocus.month == m.month)
+                          ? const Color(0xFF1B7F56)
+                          : const Color(0xFF1B2A4A),
+                      fontWeight: (current == AttendanceFilter.thisMonth &&
+                              currentFocus.year == m.year &&
+                              currentFocus.month == m.month)
+                          ? FontWeight.w800
+                          : FontWeight.w500,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                if (current == AttendanceFilter.thisMonth &&
+                    currentFocus.year == m.year &&
+                    currentFocus.month == m.month)
+                  const Icon(
+                    Icons.check_rounded,
+                    size: 16,
+                    color: Color(0xFF1B7F56),
+                  ),
+              ],
+            ),
+          ),
         const PopupMenuDivider(height: 1),
-        _menuItem(AttendanceFilter.lastMonth, 'Last month', current),
+        const PopupMenuItem<AttendanceFilter>(
+          enabled: false,
+          height: 28,
+          child: Text(
+            'QUICK RANGES',
+            style: TextStyle(
+              color: Color(0xFF8B93A7),
+              fontSize: 10.5,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.8,
+            ),
+          ),
+        ),
+        _menuItem(AttendanceFilter.thisWeek, 'This week', current),
+        _menuItem(AttendanceFilter.last30Days, 'Last 30 days', current),
         _menuItem(AttendanceFilter.custom, 'Custom range...', current),
       ],
       child: Container(
@@ -1370,7 +2330,11 @@ class _DateFilterButton extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               current == AttendanceFilter.thisMonth
-                  ? 'By Date'
+                  ? ((focus != null &&
+                          (focus!.year != now.year ||
+                              focus!.month != now.month))
+                      ? _monthTitle(focus!)
+                      : 'By Date')
                   : filterLabel(current, range),
               style: const TextStyle(
                 color: Color(0xFF6E5C49),
@@ -1499,132 +2463,6 @@ class _AttendanceCard extends StatelessWidget {
       child: child,
     ),
   );
-}
-
-class _WeekLabel extends StatelessWidget {
-  final String text;
-  const _WeekLabel(this.text);
-  @override
-  Widget build(BuildContext context) => Expanded(
-    child: Text(
-      text,
-      textAlign: TextAlign.center,
-      style: const TextStyle(
-        color: Color(0xFF8B93A7),
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-      ),
-    ),
-  );
-}
-
-class _LegendDot extends StatelessWidget {
-  final Color color;
-  final String label;
-  const _LegendDot({required this.color, required this.label});
-  @override
-  Widget build(BuildContext context) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Container(
-        width: 7,
-        height: 7,
-        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-      ),
-      const SizedBox(width: 4),
-      Text(
-        label,
-        style: const TextStyle(color: Color(0xFF6E7C8A), fontSize: 11),
-      ),
-    ],
-  );
-}
-
-class _MonthGrid extends StatelessWidget {
-  final DateTime month;
-  final DateTime selected;
-  final String Function(DateTime day) markFor;
-  final ValueChanged<DateTime> onPick;
-  const _MonthGrid({
-    required this.month,
-    required this.selected,
-    required this.markFor,
-    required this.onPick,
-  });
-  @override
-  Widget build(BuildContext context) {
-    final first = DateTime(month.year, month.month, 1);
-    final count = DateTime(month.year, month.month + 1, 0).day;
-    final lead = first.weekday % 7;
-    final cells = lead + count;
-    final rows = (cells / 7).ceil();
-    return Column(
-      children: [
-        for (var row = 0; row < rows; row++)
-          Row(
-            children: [
-              for (var col = 0; col < 7; col++)
-                Expanded(child: _cell(row * 7 + col, lead, count)),
-            ],
-          ),
-      ],
-    );
-  }
-
-  Widget _cell(int index, int lead, int count) {
-    final dayNumber = index - lead + 1;
-    if (dayNumber < 1 || dayNumber > count) return const SizedBox(height: 46);
-    final day = DateTime(month.year, month.month, dayNumber);
-    final picked = _sameDay(day, selected);
-    final mark = markFor(day);
-    final dot = switch (mark) {
-      'present' => const Color(0xFF1B7F56),
-      'absent' => const Color(0xFFE15B64),
-      'late' => const Color(0xFF3B82F6),
-      'holiday' => const Color(0xFFC5CAD3),
-      'leave' => const Color(0xFFF59E0B),
-      _ => null,
-    };
-    return InkWell(
-      onTap: () => onPick(day),
-      borderRadius: BorderRadius.circular(20),
-      child: SizedBox(
-        height: 46,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 28,
-              height: 28,
-              alignment: Alignment.center,
-              decoration: picked
-                  ? const BoxDecoration(
-                      color: Color(0xFF1B2744),
-                      shape: BoxShape.circle,
-                    )
-                  : null,
-              child: Text(
-                '$dayNumber',
-                style: TextStyle(
-                  color: picked ? Colors.white : const Color(0xFF1B2A4A),
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-            Container(
-              width: 5,
-              height: 5,
-              decoration: BoxDecoration(
-                color: dot ?? Colors.transparent,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _LogRow extends StatelessWidget {
@@ -1777,7 +2615,7 @@ class _DaySheet extends StatelessWidget {
           ? (
               'Late Arrival',
               lateMinutes > 0
-                  ? 'Arrived $lateMinutes min after scheduled start time'
+                  ? 'Arrived ${lateMinutes < 60 ? '$lateMinutes min' : lateMinutes % 60 == 0 ? '${lateMinutes ~/ 60}h' : '${lateMinutes ~/ 60}h ${lateMinutes % 60}m'} after scheduled start time'
                   : 'You arrived late at the office',
               const Color(0xFFEAF1FF),
               const Color(0xFF3B82F6),
@@ -2074,26 +2912,54 @@ class _DaySheet extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 14),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              icon: const Icon(Icons.edit_calendar_outlined, size: 16),
-              onPressed: () {
-                final navigator = Navigator.of(context);
-                final record = dayData;
-                navigator.pop();
-                navigator.push(
-                  MaterialPageRoute(
-                    builder: (_) => CorrectionPage(
-                      api: api,
-                      record: record,
-                      day: day,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              OutlinedButton.icon(
+                icon: const Icon(Icons.remove_red_eye_outlined, size: 15),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF1B2A4A),
+                  side: const BorderSide(color: Color(0xFFE2E8F0)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                ),
+                onPressed: () {
+                  final empId = api.profile?['id']?.toString() ??
+                      'ffe7154f-ba0e-4988-84a5-320bbd6bac53';
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AttendanceDayDetailPage(
+                        api: api,
+                        employeeId: empId,
+                        date: dateOnly(day),
+                        initialDayData: dayData,
+                      ),
                     ),
-                  ),
-                );
-              },
-              label: const Text('Request a correction'),
-            ),
+                  );
+                },
+                label: const Text('View Full Day & Photos', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+              ),
+              TextButton.icon(
+                icon: const Icon(Icons.edit_calendar_outlined, size: 16),
+                onPressed: () {
+                  final navigator = Navigator.of(context);
+                  final record = dayData;
+                  navigator.pop();
+                  navigator.push(
+                    MaterialPageRoute(
+                      builder: (_) => CorrectionPage(
+                        api: api,
+                        record: record,
+                        day: day,
+                      ),
+                    ),
+                  );
+                },
+                label: const Text('Request correction'),
+              ),
+            ],
           ),
         ],
       ),
@@ -2304,12 +3170,115 @@ class CorrectionPage extends StatefulWidget {
 
 class _CorrectionPageState extends State<CorrectionPage> {
   late DateTime day;
-  late TimeOfDay checkIn, checkOut;
+  DateTime? checkInDateTime;
+  DateTime? checkOutDateTime;
+  int selectedCorrectionType = 0; // 0: Add missing session, 1: Set missing checkout, 2: Void a session
   final reason = TextEditingController();
-  String regularize = 'Present';
-  List<Json> punches = const [];
   bool busy = false;
   bool loadingDay = true;
+  Json? recordedDayData;
+  List<Json> punches = const [];
+  String? attachmentName;
+  List<int>? attachmentBytes;
+
+  Future<void> _openAttachmentPicker() async {
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt_outlined, color: Color(0xFFBE5E38)),
+                title: const Text('Take photo with camera'),
+                onTap: () => _pickFromCamera(ctx),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined, color: Color(0xFFBE5E38)),
+                title: const Text('Choose from gallery'),
+                onTap: () => _pickFromGallery(ctx),
+              ),
+              ListTile(
+                leading: const Icon(Icons.folder_open_outlined, color: Color(0xFFBE5E38)),
+                title: const Text('Browse files / documents'),
+                onTap: () => _pickFromFileSystem(ctx),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickFromCamera(BuildContext ctx) async {
+    Navigator.pop(ctx);
+    try {
+      final picker = ImagePicker();
+      final photo = await picker.pickImage(source: ImageSource.camera, imageQuality: 85);
+      if (photo != null) {
+        final bytes = await photo.readAsBytes();
+        if (mounted) {
+          setState(() {
+            attachmentName = photo.name;
+            attachmentBytes = bytes;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) message(context, 'Could not capture photo: $e');
+    }
+  }
+
+  Future<void> _pickFromGallery(BuildContext ctx) async {
+    Navigator.pop(ctx);
+    try {
+      final picker = ImagePicker();
+      final image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        if (mounted) {
+          setState(() {
+            attachmentName = image.name;
+            attachmentBytes = bytes;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) message(context, 'Could not pick image: $e');
+    }
+  }
+
+  Future<void> _pickFromFileSystem(BuildContext ctx) async {
+    Navigator.pop(ctx);
+    try {
+      final result = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg'],
+        withData: true,
+      );
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.first;
+        List<int>? bytes = file.bytes;
+        final path = file.path;
+        if (bytes == null && path != null) {
+          bytes = await File(path).readAsBytes();
+        }
+        if (bytes != null && mounted) {
+          setState(() {
+            attachmentName = file.name;
+            attachmentBytes = bytes;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) message(context, 'Could not pick file: $e');
+    }
+  }
 
   @override
   void initState() {
@@ -2321,6 +3290,7 @@ class _CorrectionPageState extends State<CorrectionPage> {
             (record['day'] ?? record['date'])?.toString() ?? '',
           );
     day = recorded ?? widget.day ?? DateTime.now();
+
     final clockIn = record == null
         ? null
         : DateTime.tryParse(
@@ -2331,12 +3301,12 @@ class _CorrectionPageState extends State<CorrectionPage> {
         : DateTime.tryParse(
             (record['clock_out'] ?? record['lastOutAt'])?.toString() ?? '',
           )?.toLocal();
-    checkIn = clockIn == null
-        ? const TimeOfDay(hour: 9, minute: 15)
-        : TimeOfDay.fromDateTime(clockIn);
-    checkOut = clockOut == null
-        ? const TimeOfDay(hour: 18, minute: 30)
-        : TimeOfDay.fromDateTime(clockOut);
+
+    checkInDateTime = clockIn ??
+        DateTime(day.year, day.month, day.day, 9, 15);
+    checkOutDateTime = clockOut ??
+        DateTime(day.year, day.month, day.day, 18, 30);
+
     loadDay();
   }
 
@@ -2346,9 +3316,6 @@ class _CorrectionPageState extends State<CorrectionPage> {
     super.dispose();
   }
 
-  DateTime _at(TimeOfDay time) =>
-      DateTime(day.year, day.month, day.day, time.hour, time.minute);
-
   Future<void> loadDay() async {
     setState(() => loadingDay = true);
     try {
@@ -2356,148 +3323,224 @@ class _CorrectionPageState extends State<CorrectionPage> {
         '/attendance/me',
         query: {'from': dateOnly(day), 'to': dateOnly(day)},
       );
+      final days = (data['days'] as List?)?.cast<Json?>() ?? const [];
+      final match = days.firstWhere(
+        (d) => d?['date'] == dateOnly(day),
+        orElse: () => data['day'] as Json?,
+      );
       final rows = items(
         data,
       ).where((row) => row['day'] == dateOnly(day)).toList();
-      if (mounted) setState(() => punches = rows);
+      if (mounted) {
+        setState(() {
+          recordedDayData = match;
+          punches = rows;
+          if (selectedCorrectionType == 1 && match?['firstInAt'] != null) {
+            final parsedIn =
+                DateTime.tryParse(match!['firstInAt'].toString())?.toLocal();
+            if (parsedIn != null) checkInDateTime = parsedIn;
+          }
+        });
+      }
     } catch (_) {
-      if (mounted) setState(() => punches = const []);
+      if (mounted) {
+        setState(() {
+          recordedDayData = null;
+          punches = const [];
+        });
+      }
     } finally {
       if (mounted) setState(() => loadingDay = false);
     }
   }
 
   Future<void> pickDay() async {
+    final now = DateTime.now();
+    final minDate = now.subtract(const Duration(days: 45));
     final picked = await showDatePicker(
       context: context,
-      initialDate: day,
-      firstDate: DateTime.now().subtract(const Duration(days: 365)),
-      lastDate: DateTime.now(),
-    );
-    if (picked == null || !mounted) return;
-    setState(() => day = DateTime(picked.year, picked.month, picked.day));
-    await loadDay();
-  }
-
-  Future<void> pickTime(bool inbound) async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: inbound ? checkIn : checkOut,
+      initialDate:
+          day.isBefore(minDate) ? minDate : (day.isAfter(now) ? now : day),
+      firstDate: minDate,
+      lastDate: now,
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.light(
+            primary: Color(0xFFBE5E38),
+            onPrimary: Colors.white,
+            surface: Colors.white,
+            onSurface: Color(0xFF1B2A4A),
+          ),
+        ),
+        child: child!,
+      ),
     );
     if (picked == null || !mounted) return;
     setState(() {
+      day = DateTime(picked.year, picked.month, picked.day);
+      if (checkInDateTime != null) {
+        checkInDateTime = DateTime(
+          day.year,
+          day.month,
+          day.day,
+          checkInDateTime!.hour,
+          checkInDateTime!.minute,
+        );
+      }
+      if (checkOutDateTime != null) {
+        checkOutDateTime = DateTime(
+          day.year,
+          day.month,
+          day.day,
+          checkOutDateTime!.hour,
+          checkOutDateTime!.minute,
+        );
+      }
+    });
+    await loadDay();
+  }
+
+  Future<void> pickDateTime(bool inbound) async {
+    final current = inbound
+        ? (checkInDateTime ?? DateTime(day.year, day.month, day.day, 9, 15))
+        : (checkOutDateTime ?? DateTime(day.year, day.month, day.day, 18, 30));
+
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: current,
+      firstDate: DateTime.now().subtract(const Duration(days: 45)),
+      lastDate: DateTime.now(),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.light(
+            primary: Color(0xFFBE5E38),
+            onPrimary: Colors.white,
+            surface: Colors.white,
+            onSurface: Color(0xFF1B2A4A),
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (pickedDate == null || !mounted) return;
+
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(current),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.light(
+            primary: Color(0xFFBE5E38),
+            onPrimary: Colors.white,
+            surface: Colors.white,
+            onSurface: Color(0xFF1B2A4A),
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (pickedTime == null || !mounted) return;
+
+    final result = DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
+    );
+
+    setState(() {
       if (inbound) {
-        checkIn = picked;
+        checkInDateTime = result;
       } else {
-        checkOut = picked;
+        checkOutDateTime = result;
       }
     });
   }
 
-  void showPunches() {
-    final logs = punches.isEmpty ? [const <String, dynamic>{}] : punches;
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      backgroundColor: const Color(0xFFF4F7F8),
-      builder: (sheet) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-          children: [
-            const Text(
-              'Punch logs',
-              style: TextStyle(
-                color: Color(0xFF1B2A4A),
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              shortDate(dateOnly(day)),
-              style: const TextStyle(color: Color(0xFF8B93A7), fontSize: 13),
-            ),
-            const SizedBox(height: 14),
-            for (var i = 0; i < logs.length; i++) ...[
-              if (logs.length > 1)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(
-                    'Session ${i + 1}',
-                    style: const TextStyle(
-                      color: Color(0xFF6E7C8A),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              _punchRow(
-                Icons.login_rounded,
-                const Color(0xFFE7F6EE),
-                primary,
-                'Check-in',
-                clockText(logs[i]['clock_in']),
-              ),
-              const SizedBox(height: 8),
-              _punchRow(
-                Icons.logout_rounded,
-                const Color(0xFFFDECEC),
-                const Color(0xFFE15B64),
-                'Check-out',
-                clockText(logs[i]['clock_out']),
-              ),
-              if (i < logs.length - 1) const SizedBox(height: 14),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<void> submit() async {
-    if (widget.api.live) {
-      await comingSoon(
-        context,
-        'Attendance request',
-        'Regularizing attendance is on hold for now.',
-      );
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final workDay = DateTime(day.year, day.month, day.day);
+
+    if (workDay.isAfter(today)) {
+      message(context, 'Future dates are not allowed.');
       return;
     }
+    final minDate = today.subtract(const Duration(days: 45));
+    if (workDay.isBefore(minDate)) {
+      message(context, 'Work date must be within the last 45 days.');
+      return;
+    }
+
     if (reason.text.trim().isEmpty) {
-      message(context, 'Please add a reason.');
+      message(context, 'Please add a reason for the correction.');
       return;
     }
-    final start = _at(checkIn);
-    final end = _at(checkOut);
-    if (!end.isAfter(start)) {
-      message(context, 'Check-out must be after check-in.');
-      return;
+
+    if (selectedCorrectionType != 2) {
+      if (checkInDateTime == null || checkOutDateTime == null) {
+        message(context, 'Please select both check-in and checkout times.');
+        return;
+      }
+      if (!checkOutDateTime!.isAfter(checkInDateTime!)) {
+        message(context, 'Checkout time must be after check-in time.');
+        return;
+      }
     }
+
     setState(() => busy = true);
     try {
-      final recordId =
-          widget.record?['id'] ??
-          (punches.isEmpty ? null : punches.first['id']);
-      final created = await widget.api.mutate('/regularisations', {
-        if (recordId != null) 'attendance_id': recordId,
+      final typeString = switch (selectedCorrectionType) {
+        0 => 'ADD_SESSION',
+        1 => 'MISSING_CHECKOUT',
+        2 => 'VOID_SESSION',
+        _ => 'ADD_SESSION',
+      };
+
+      final body = {
+        'workDate': dateOnly(day),
         'day': dateOnly(day),
-        'proposed_in': start.toUtc().toIso8601String(),
-        'proposed_out': end.toUtc().toIso8601String(),
-        'regularize_as': regularize == 'Home' ? 'Work from home' : 'Present',
+        'type': typeString,
+        if (checkInDateTime != null)
+          'requestedCheckIn': checkInDateTime!.toUtc().toIso8601String(),
+        if (checkOutDateTime != null)
+          'requestedCheckOut': checkOutDateTime!.toUtc().toIso8601String(),
+        if (checkInDateTime != null)
+          'proposed_in': checkInDateTime!.toUtc().toIso8601String(),
+        if (checkOutDateTime != null)
+          'proposed_out': checkOutDateTime!.toUtc().toIso8601String(),
         'reason': reason.text.trim(),
-      });
+        'regularize_as': 'Present',
+        if (attachmentBytes != null) 'attachmentBytes': attachmentBytes,
+        if (attachmentName != null) 'attachmentName': attachmentName,
+      };
+
+      await widget.api.mutate('/regularisations', body);
+
       if (mounted) {
-        await Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => RequestDetails(
-              api: widget.api,
-              id: created['id'],
-              review: false,
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: const Color(0xFF1B7F56),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            content: const Row(
+              children: [
+                Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Attendance correction request submitted.',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
             ),
           ),
         );
+        Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) message(context, e);
@@ -2508,321 +3551,709 @@ class _CorrectionPageState extends State<CorrectionPage> {
 
   @override
   Widget build(BuildContext context) {
-    final profile = widget.api.profile ?? {};
-    final name = profile['name']?.toString() ?? '';
-    final absent = punches.isEmpty;
-    final statusLabel = absent ? 'Absent' : 'Present';
-    final statusBg = absent ? const Color(0xFFFDECEC) : const Color(0xFFE7F6EE);
-    final statusFg = absent ? const Color(0xFFE15B64) : primary;
-    const weekdays = [
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday',
-    ];
-    return Scaffold(
-      backgroundColor: const Color(0xFFF4F7F8),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    // Commented out: Recorded card details (Image 4)
+    // final statusRaw = recordedDayData?['status']?.toString().toUpperCase();
+    // final statusLabel = switch (statusRaw) {
+    //   'WEEKEND' => 'Weekend',
+    //   'HOLIDAY' => 'Holiday',
+    //   'PRESENT' => 'Present',
+    //   'ABSENT' => 'Absent',
+    //   'ON_LEAVE' || 'HALF_DAY_LEAVE' => 'On Leave',
+    //   _ => (day.weekday >= 6
+    //       ? 'Weekend'
+    //       : (punches.isEmpty ? 'Absent' : 'Present')),
+    // };
+    //
+    // final hasNoRecordedAttendance = recordedDayData == null ||
+    //     statusRaw == 'WEEKEND' ||
+    //     statusRaw == 'HOLIDAY' ||
+    //     (punches.isEmpty && recordedDayData?['firstInAt'] == null);
+    //
+    // final isWide = MediaQuery.of(context).size.width >= 800;
+
+    final correctionCard = Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Correction',
+            style: TextStyle(
+              color: Color(0xFF1B2A4A),
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Work date *
+          RichText(
+            text: const TextSpan(
+              text: 'Work date ',
+              style: TextStyle(
+                color: Color(0xFF1B2A4A),
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
               children: [
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.arrow_back),
-                ),
-                const SizedBox(width: 4),
-                const Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.only(top: 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Regularize Attendance',
-                          style: TextStyle(
-                            color: Color(0xFF1B2A4A),
-                            fontSize: 22,
-                            fontWeight: FontWeight.w600,
-                            height: 1.15,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Request to regularize your missed or incorrect attendance.',
-                          style: TextStyle(
-                            color: Color(0xFF8B93A7),
-                            fontSize: 13,
-                            height: 1.35,
-                          ),
-                        ),
-                      ],
-                    ),
+                TextSpan(
+                  text: '*',
+                  style: TextStyle(
+                    color: Color(0xFFE15B64),
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(width: 8),
-                const _RegularizeArt(),
               ],
             ),
-            const SizedBox(height: 16),
-            _formCard(
+          ),
+          const SizedBox(height: 6),
+          InkWell(
+            onTap: pickDay,
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFD0D7DE)),
+              ),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 22,
-                    backgroundColor: const Color(0xFFE4DFF8),
-                    child: Text(
-                      _initials(name),
-                      style: const TextStyle(
-                        color: Color(0xFF6B5BD6),
-                        fontWeight: FontWeight.w600,
-                      ),
+                  Text(
+                    _formatDateDdMmYyyy(day),
+                    style: const TextStyle(
+                      color: Color(0xFF1B2A4A),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 15,
-                          ),
-                        ),
-                        Text(
-                          '${profile['designation'] ?? 'Team member'}  ·  ${profile['id'] ?? ''}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Color(0xFF8B93A7),
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
+                  const Spacer(),
+                  const Icon(
+                    Icons.calendar_today_outlined,
+                    size: 16,
+                    color: Color(0xFF6E7C8A),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
-            _formCard(
-              child: InkWell(
-                onTap: pickDay,
-                child: Row(
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Up to 45 days back; future dates are not allowed.',
+            style: TextStyle(
+              color: Color(0xFF8B93A7),
+              fontSize: 11.5,
+            ),
+          ),
+          const SizedBox(height: 18),
+          // What needs correcting?
+          const Text(
+            'What needs correcting?',
+            style: TextStyle(
+              color: Color(0xFF1B2A4A),
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Column(
+            children: [
+              _correctionOption(
+                index: 0,
+                title: 'Add missing session',
+                description:
+                    'You worked but have no check-in/check-out for a period (e.g. forgot to check in).',
+              ),
+              const SizedBox(height: 10),
+              _correctionOption(
+                index: 1,
+                title: 'Set missing checkout',
+                description: 'You checked in but forgot to check out.',
+              ),
+              const SizedBox(height: 10),
+              _correctionOption(
+                index: 2,
+                title: 'Void a session',
+                description:
+                    'A recorded session is wrong and should not count (e.g. accidental check-in).',
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          // Time Pickers
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(
-                      Icons.calendar_today_outlined,
-                      size: 18,
-                      color: Color(0xFF6E7C8A),
-                    ),
-                    const SizedBox(width: 10),
-                    const Expanded(
-                      child: Text(
-                        'Date',
+                    RichText(
+                      text: const TextSpan(
+                        text: 'Check-in time ',
                         style: TextStyle(
-                          color: Color(0xFF8B93A7),
-                          fontSize: 12,
+                          color: Color(0xFF1B2A4A),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: '*',
+                            style: TextStyle(
+                              color: Color(0xFFE15B64),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    InkWell(
+                      onTap: () => pickDateTime(true),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFD0D7DE)),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _formatDateTimeDdMmYyyy(checkInDateTime),
+                                style: const TextStyle(
+                                  color: Color(0xFF1B2A4A),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12.5,
+                                ),
+                              ),
+                            ),
+                            const Icon(
+                              Icons.calendar_today_outlined,
+                              size: 15,
+                              color: Color(0xFF6E7C8A),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                    Text(
-                      '${shortDate(dateOnly(day))}, ${weekdays[day.weekday - 1]}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 13,
-                      ),
-                    ),
-                    const Icon(Icons.chevron_right, color: Color(0xFFC5CAD3)),
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Current status',
-              style: TextStyle(
-                color: Color(0xFF1B2A4A),
-                fontWeight: FontWeight.w600,
-                fontSize: 15,
-              ),
-            ),
-            const SizedBox(height: 8),
-            _formCard(
-              child: loadingDay
-                  ? const LinearProgressIndicator(minHeight: 2)
-                  : Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: statusBg,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                absent ? Icons.cancel : Icons.check_circle,
-                                size: 16,
-                                color: statusFg,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                statusLabel,
-                                style: TextStyle(
-                                  color: statusFg,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    RichText(
+                      text: const TextSpan(
+                        text: 'Checkout time ',
+                        style: TextStyle(
+                          color: Color(0xFF1B2A4A),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
                         ),
-                        const Spacer(),
-                        InkWell(
-                          onTap: showPunches,
-                          child: const Row(
-                            children: [
-                              Text(
-                                'View punch logs',
-                                style: TextStyle(
-                                  color: Color(0xFF1B7F56),
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              Icon(
-                                Icons.chevron_right,
-                                color: Color(0xFF1B7F56),
-                                size: 18,
-                              ),
-                            ],
+                        children: [
+                          TextSpan(
+                            text: '*',
+                            style: TextStyle(
+                              color: Color(0xFFE15B64),
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Regularize as',
+                    const SizedBox(height: 6),
+                    InkWell(
+                      onTap: () => pickDateTime(false),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFD0D7DE)),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _formatDateTimeDdMmYyyy(checkOutDateTime),
+                                style: const TextStyle(
+                                  color: Color(0xFF1B2A4A),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12.5,
+                                ),
+                              ),
+                            ),
+                            const Icon(
+                              Icons.calendar_today_outlined,
+                              size: 15,
+                              color: Color(0xFF6E7C8A),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          // Reason / Note
+          RichText(
+            text: const TextSpan(
+              text: 'Reason / Note ',
               style: TextStyle(
                 color: Color(0xFF1B2A4A),
-                fontWeight: FontWeight.w600,
-                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
               ),
-            ),
-            const SizedBox(height: 8),
-            Row(
               children: [
-                Expanded(
-                  child: _choice(
-                    'Present',
-                    Icons.schedule,
-                    regularize == 'Present',
-                    () => setState(() => regularize = 'Present'),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _choice(
-                    'Work From Home',
-                    Icons.home_outlined,
-                    regularize == 'Home',
-                    () => setState(() => regularize = 'Home'),
+                TextSpan(
+                  text: '*',
+                  style: TextStyle(
+                    color: Color(0xFFE15B64),
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _timeBox(
-                    'Check-in time',
-                    _clockLabel(checkIn),
-                    () => pickTime(true),
-                  ),
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: reason,
+            maxLines: 3,
+            decoration: InputDecoration(
+              hintText: 'Explain what happened and why this adjustment is needed...',
+              hintStyle: const TextStyle(
+                color: Color(0xFFB0B7C3),
+                fontSize: 13,
+              ),
+              contentPadding: const EdgeInsets.all(12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFFD0D7DE)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFFD0D7DE)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(
+                  color: Color(0xFFBE5E38),
+                  width: 1.5,
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _timeBox(
-                    'Check-out time',
-                    _clockLabel(checkOut),
-                    () => pickTime(false),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Reason',
-              style: TextStyle(
-                color: Color(0xFF1B2A4A),
-                fontWeight: FontWeight.w600,
-                fontSize: 15,
               ),
             ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: reason,
-              maxLines: 4,
-              maxLength: 500,
-              onChanged: (_) => setState(() {}),
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Colors.white,
-                hintText:
-                    'Enter reason for regularization\ne.g., Forgot to punch, System issue, Official work etc.',
-                hintStyle: const TextStyle(
-                  color: Color(0xFFB0B7C3),
+          ),
+          const SizedBox(height: 16),
+          // Attachment (optional)
+          const Text(
+            'Attachment (optional)',
+            style: TextStyle(
+              color: Color(0xFF1B2A4A),
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 6),
+          if (attachmentName != null) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFCBD5E1)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.attach_file_rounded, size: 18, color: Color(0xFFBE5E38)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      attachmentName!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1B2A4A),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 18, color: Color(0xFF64748B)),
+                    onPressed: () => setState(() {
+                      attachmentName = null;
+                      attachmentBytes = null;
+                    }),
+                  ),
+                ],
+              ),
+            ),
+          ] else ...[
+            OutlinedButton.icon(
+              onPressed: _openAttachmentPicker,
+              icon: const Icon(Icons.add_photo_alternate_outlined, size: 18, color: Color(0xFFBE5E38)),
+              label: const Text(
+                'Add Photo or Document',
+                style: TextStyle(
+                  color: Color(0xFFBE5E38),
+                  fontWeight: FontWeight.w700,
                   fontSize: 13,
-                  height: 1.4,
                 ),
-                prefixIcon: const Padding(
-                  padding: EdgeInsets.only(bottom: 48),
-                  child: Icon(
-                    Icons.description_outlined,
-                    color: Color(0xFFC5CAD3),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFFE8D3C5)),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 20),
+          // Action buttons
+          Row(
+            children: [
+              OutlinedButton(
+                onPressed: () => Navigator.pop(context),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF1B2A4A),
+                  side: const BorderSide(color: Color(0xFFD0D7DE)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 22,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                counterText: '${reason.text.length}/500',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: Color(0xFFE8EDF2)),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(fontWeight: FontWeight.w600),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: Color(0xFFE8EDF2)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: busy ? null : submit,
+                  icon: busy
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.send_rounded, size: 16),
+                  label: Text(
+                    busy ? 'Submitting...' : 'Submit request',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFBE5E38),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
                 ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    /*
+    // Commented out: Recorded card on correction page (Image 4)
+    final recordedCard = Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Recorded on ${day.day} ${_shortMonth(day)} ${day.year}',
+                style: const TextStyle(
+                  color: Color(0xFF1B2A4A),
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F3F6),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.circle,
+                      size: 6,
+                      color: Color(0xFF6E7C8A),
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      statusLabel,
+                      style: const TextStyle(
+                        color: Color(0xFF6E7C8A),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (loadingDay)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 36),
+              child: Center(
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Color(0xFFBE5E38),
+                ),
+              ),
+            )
+          else if (hasNoRecordedAttendance)
+            Center(
+              child: Column(
+                children: [
+                  const SizedBox(height: 24),
+                  Container(
+                    width: 54,
+                    height: 54,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF5EBE1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.inbox_outlined,
+                      size: 26,
+                      color: Color(0xFF8C7E72),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'No attendance recorded',
+                    style: TextStyle(
+                      color: Color(0xFF1B2A4A),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Nothing was captured for this date.',
+                    style: TextStyle(
+                      color: Color(0xFF8B93A7),
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            )
+          else ...[
+            if (recordedDayData?['firstInAt'] != null)
+              _LogRow(
+                icon: Icons.login_rounded,
+                iconColor: const Color(0xFF1B7F56),
+                iconBackground: const Color(0xFFE7F6EE),
+                title: 'Check-in',
+                time: clockText(recordedDayData!['firstInAt'].toString()),
+                office: 'Recorded Check-in',
+                place: 'Original attendance record',
+                badge: 'Original',
+                badgeColor: const Color(0xFF1B7F56),
+                badgeBackground: const Color(0xFFE7F6EE),
+              ),
+            if (recordedDayData?['lastOutAt'] != null)
+              _LogRow(
+                icon: Icons.logout_rounded,
+                iconColor: const Color(0xFFE15B64),
+                iconBackground: const Color(0xFFFDECEC),
+                title: 'Check-out',
+                time: clockText(recordedDayData!['lastOutAt'].toString()),
+                office: 'Recorded Check-out',
+                place: 'Original attendance record',
+                badge: 'Original',
+                badgeColor: const Color(0xFF6E7C8A),
+                badgeBackground: const Color(0xFFF1F3F6),
+              ),
+            const SizedBox(height: 14),
+          ],
+          const Divider(color: Color(0xFFE2E8F0), height: 32),
+          // Bottom note
+          const Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.verified_user_outlined,
+                size: 18,
+                color: Color(0xFF1B7F56),
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Original photos, locations and server times stay on record. Reviewers see both the original events and your requested change.',
+                  style: TextStyle(
+                    color: Color(0xFF5A6672),
+                    fontSize: 12,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+    */
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF1B2A4A)),
+        ),
+      ),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+          children: [
+            const Text(
+              'Request attendance correction',
+              style: TextStyle(
+                color: Color(0xFF1B2A4A),
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                height: 1.2,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Your request goes to your manager. Original check-in/out evidence is retained unchanged; an approved request is applied as an audited adjustment.',
+              style: TextStyle(
+                color: Color(0xFF6E7C8A),
+                fontSize: 13,
+                height: 1.4,
               ),
             ),
             const SizedBox(height: 18),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: primary,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 52),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              onPressed: busy ? null : submit,
-              child: Text(
-                busy ? 'Sending' : 'Submit request',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                ),
+            // Commented out: Recorded card layout (Image 4)
+            correctionCard,
+            /*
+            if (isWide)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(flex: 3, child: correctionCard),
+                  const SizedBox(width: 16),
+                  Expanded(flex: 2, child: recordedCard),
+                ],
+              )
+            else ...[
+              correctionCard,
+              const SizedBox(height: 16),
+              recordedCard,
+            ],
+            */
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _correctionOption({
+    required int index,
+    required String title,
+    required String description,
+  }) {
+    final isSelected = selectedCorrectionType == index;
+    return InkWell(
+      onTap: () => setState(() => selectedCorrectionType = index),
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFFDF6F0) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? const Color(0xFFC76C46)
+                : const Color(0xFFE2E8F0),
+            width: isSelected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Color(0xFF1B2A4A),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      color: isSelected
+                          ? const Color(0xFF5A6672)
+                          : const Color(0xFF8B93A7),
+                      fontSize: 12,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -2830,207 +4261,17 @@ class _CorrectionPageState extends State<CorrectionPage> {
       ),
     );
   }
-
-  Widget _choice(
-    String label,
-    IconData icon,
-    bool selected,
-    VoidCallback onTap,
-  ) => Material(
-    color: selected ? const Color(0xFFE7F6EE) : Colors.white,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(14),
-      side: BorderSide(
-        color: selected ? primary : const Color(0xFFE8EDF2),
-        width: selected ? 1.4 : 1,
-      ),
-    ),
-    child: InkWell(
-      borderRadius: BorderRadius.circular(14),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              size: 18,
-              color: selected ? primary : const Color(0xFF8B93A7),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                label,
-                maxLines: 2,
-                style: TextStyle(
-                  color: selected ? primary : const Color(0xFF1B2A4A),
-                  fontWeight: FontWeight.w500,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-            Icon(
-              selected ? Icons.check_circle : Icons.circle_outlined,
-              size: 18,
-              color: selected ? primary : const Color(0xFFD0D5DD),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-
-  Widget _timeBox(String label, String value, VoidCallback onTap) => Material(
-    color: Colors.white,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(14),
-      side: const BorderSide(color: Color(0xFFE8EDF2)),
-    ),
-    child: InkWell(
-      borderRadius: BorderRadius.circular(14),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            const Icon(Icons.schedule, size: 16, color: Color(0xFF8B93A7)),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      color: Color(0xFF8B93A7),
-                      fontSize: 11,
-                    ),
-                  ),
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.keyboard_arrow_down, color: Color(0xFFC5CAD3)),
-          ],
-        ),
-      ),
-    ),
-  );
 }
 
-Widget _punchRow(
-  IconData icon,
-  Color background,
-  Color foreground,
-  String label,
-  String value,
-) => Material(
-  color: Colors.white,
-  borderRadius: BorderRadius.circular(14),
-  child: Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-    child: Row(
-      children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: background,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, color: foreground, size: 18),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            label,
-            style: const TextStyle(color: Color(0xFF6E7C8A), fontSize: 13),
-          ),
-        ),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Color(0xFF1B2A4A),
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-          ),
-        ),
-      ],
-    ),
-  ),
-);
+String _formatDateDdMmYyyy(DateTime d) =>
+    '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
 
-Widget _formCard({required Widget child}) => Material(
-  color: Colors.white,
-  borderRadius: BorderRadius.circular(16),
-  child: Padding(padding: const EdgeInsets.all(14), child: child),
-);
-
-String _initials(String name) {
-  final parts = name
-      .trim()
-      .split(RegExp(r'\s+'))
-      .where((part) => part.isNotEmpty)
-      .toList();
-  if (parts.isEmpty) return '?';
-  if (parts.length == 1) {
-    final word = parts.first;
-    return word.substring(0, word.length < 2 ? 1 : 2).toUpperCase();
-  }
-  return '${parts.first[0]}${parts[1][0]}'.toUpperCase();
-}
-
-String _clockLabel(TimeOfDay time) {
-  final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
-  final minute = time.minute.toString().padLeft(2, '0');
-  final suffix = time.period == DayPeriod.am ? 'AM' : 'PM';
-  return '${hour.toString().padLeft(2, '0')}:$minute $suffix';
-}
-
-class _RegularizeArt extends StatelessWidget {
-  const _RegularizeArt();
-  @override
-  Widget build(BuildContext context) => SizedBox(
-    width: 72,
-    height: 72,
-    child: Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Positioned(
-          right: 8,
-          top: 0,
-          child: Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE7F6EE),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.calendar_month, color: Color(0xFF1B7F56)),
-          ),
-        ),
-        Positioned(
-          right: 0,
-          bottom: 0,
-          child: Container(
-            width: 28,
-            height: 28,
-            decoration: const BoxDecoration(
-              color: Color(0xFF1B7F56),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.schedule, color: Colors.white, size: 16),
-          ),
-        ),
-      ],
-    ),
-  );
+String _formatDateTimeDdMmYyyy(DateTime? dt) {
+  if (dt == null) return 'dd/mm/yyyy, --:-- --';
+  final hour = dt.hour == 0 ? 12 : (dt.hour > 12 ? dt.hour - 12 : dt.hour);
+  final minute = dt.minute.toString().padLeft(2, '0');
+  final suffix = dt.hour >= 12 ? 'PM' : 'AM';
+  return '${_formatDateDdMmYyyy(dt)}, ${hour.toString().padLeft(2, '0')}:$minute $suffix';
 }
 
 class RegularizeListPage extends StatefulWidget {

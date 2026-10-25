@@ -721,6 +721,26 @@ class _LoginPageState extends State<LoginPage> {
   bool busy = false, show = false;
   String language = 'EN';
   Object? error;
+  List<String> recentEmails = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecentEmails();
+  }
+
+  Future<void> _loadRecentEmails() async {
+    final list = await widget.api.getRecentEmails();
+    if (mounted) {
+      setState(() {
+        recentEmails = list;
+        if (id.text.isEmpty && list.isNotEmpty) {
+          id.text = list.first;
+        }
+      });
+    }
+  }
+
   @override
   void dispose() {
     id.dispose();
@@ -919,6 +939,7 @@ class _LoginPageState extends State<LoginPage> {
                             controller: id,
                             autofillHints: const [AutofillHints.username],
                             textInputAction: TextInputAction.next,
+                            onChanged: (_) => setState(() {}),
                             validator: (s) => s == null || s.trim().isEmpty
                                 ? 'Enter your email'
                                 : null,
@@ -927,6 +948,72 @@ class _LoginPageState extends State<LoginPage> {
                               Icons.mail_outline,
                             ),
                           ),
+                          if (recentEmails.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: recentEmails.map((email) {
+                                final isSelected =
+                                    id.text.trim().toLowerCase() ==
+                                    email.toLowerCase();
+                                return InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      id.text = email;
+                                      id.selection =
+                                          TextSelection.fromPosition(
+                                        TextPosition(offset: email.length),
+                                      );
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? const Color(0xFFFDF0E7)
+                                          : const Color(0xFFF4F6F8),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? const Color(0xFFBA4728)
+                                            : const Color(0xFFE2E8F0),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.history,
+                                          size: 13,
+                                          color: isSelected
+                                              ? const Color(0xFFBA4728)
+                                              : const Color(0xFF64748B),
+                                        ),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          email,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: isSelected
+                                                ? FontWeight.w600
+                                                : FontWeight.w500,
+                                            color: isSelected
+                                                ? const Color(0xFFBA4728)
+                                                : const Color(0xFF334155),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ],
                           const SizedBox(height: 16),
                           const Text(
                             'Password',
