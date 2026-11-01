@@ -192,16 +192,15 @@ void main() {
     expect(find.text('At risk'), findsOneWidget);
     expect(find.text('Issues'), findsOneWidget);
 
-    // 4. Charts & Widgets
-    expect(find.text('Status distribution'), findsOneWidget);
-    expect(find.text('By priority'), findsOneWidget);
-    expect(find.text('Issues by status'), findsOneWidget);
-    expect(find.text('Created vs completed'), findsOneWidget);
-    expect(find.text('By task type'), findsOneWidget);
-    expect(find.text('By project'), findsOneWidget);
-    expect(find.text('By team'), findsOneWidget);
-    await tester.scrollUntilVisible(find.text('Overdue by project'), 300);
-    expect(find.text('Overdue by project'), findsOneWidget);
+    // 4. Verify charts & widgets from Status distribution downwards are removed
+    expect(find.text('Status distribution'), findsNothing);
+    expect(find.text('By priority'), findsNothing);
+    expect(find.text('Issues by status'), findsNothing);
+    expect(find.text('Created vs completed'), findsNothing);
+    expect(find.text('By task type'), findsNothing);
+    expect(find.text('By project'), findsNothing);
+    expect(find.text('By team'), findsNothing);
+    expect(find.text('Overdue by project'), findsNothing);
 
     // 5. Scroll back up and test Assignee Bottom Sheet with Search Field
     await tester.scrollUntilVisible(find.text('By Assignee Name...'), -300);

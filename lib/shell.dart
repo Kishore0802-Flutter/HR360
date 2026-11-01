@@ -2591,23 +2591,63 @@ class _ProfilePageState extends State<ProfilePage> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 20, 16, 120),
         children: [
-          const Text(
-            'My profile',
-            style: TextStyle(
-              color: Color(0xFF1E242B),
-              fontSize: 26,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.3,
-            ),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Your account, preferences and security settings.',
-            style: TextStyle(
-              color: Color(0xFF6B7280),
-              fontSize: 13.5,
-              fontWeight: FontWeight.w400,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'My profile',
+                      style: TextStyle(
+                        color: Color(0xFF1E242B),
+                        fontSize: 26,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Your account, preferences and security settings.',
+                      style: TextStyle(
+                        color: Color(0xFF6B7280),
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                onPressed: busy ? null : logout,
+                icon: const Icon(
+                  Icons.logout_rounded,
+                  size: 15,
+                  color: Color(0xFFDC2626),
+                ),
+                label: const Text(
+                  'Log out',
+                  style: TextStyle(
+                    color: Color(0xFFDC2626),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12.5,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFFFCA5A5)),
+                  backgroundColor: const Color(0xFFFEF2F2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 18),
           Align(
@@ -2811,10 +2851,80 @@ class _ProfilePageState extends State<ProfilePage> {
           ] else ...[
             _buildSecurityTab(p),
           ],
+          const SizedBox(height: 24),
+          //_buildLogoutCard(),
         ],
       ),
     );
   }
+
+  // Widget _buildLogoutCard() {
+  // return Container(
+  //   width: double.infinity,
+  //   decoration: BoxDecoration(
+  //     color: Colors.white,
+  //     borderRadius: BorderRadius.circular(16),
+  //     border: Border.all(
+  //       color: const Color(0xFFFCA5A5).withValues(alpha: 0.6),
+  //       width: 1.2,
+  //     ),
+  //     boxShadow: const [
+  //       BoxShadow(
+  //         color: Color(0x06000000),
+  //         blurRadius: 8,
+  //         offset: Offset(0, 2),
+  //       ),
+  //     ],
+  //   ),
+  //   child: Material(
+  //     color: Colors.transparent,
+  //     child: InkWell(
+  //       onTap: busy ? null : logout,
+  //       borderRadius: BorderRadius.circular(16),
+  //       child: Padding(
+  //         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
+  //         child: Row(
+  //           mainAxisAlignment: MainAxisAlignment.center,
+  //           children: [
+  //             if (busy)
+  //               const SizedBox(
+  //                 width: 18,
+  //                 height: 18,
+  //                 child: CircularProgressIndicator(
+  //                   strokeWidth: 2,
+  //                   color: Color(0xFFDC2626),
+  //                 ),
+  //               )
+  //             else ...[
+  //               // Container(
+  //               //   padding: const EdgeInsets.all(7),
+  //               //   decoration: BoxDecoration(
+  //               //     color: const Color(0xFFFEF2F2),
+  //               //     borderRadius: BorderRadius.circular(8),
+  //               //   ),
+  //               //   child: const Icon(
+  //               //     Icons.logout_rounded,
+  //               //     color: Color(0xFFDC2626),
+  //               //     size: 18,
+  //               //   ),
+  //               // ),
+  //               // const SizedBox(width: 10),
+  //               // const Text(
+  //               //   'Log out of HRMS',
+  //               //   style: TextStyle(
+  //               //     color: Color(0xFFDC2626),
+  //               //     fontSize: 14.5,
+  //               //     fontWeight: FontWeight.w700,
+  //               //   ),
+  //               // ),
+  //             ],
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   ),
+  // );
+  //}
 }
 
 class _CustomSwitch extends StatelessWidget {
@@ -5911,7 +6021,9 @@ class _TodayActivityContainer extends StatelessWidget {
                           width: 7,
                           height: 7,
                           decoration: BoxDecoration(
-                            color: isCheckedIn ? green : const Color(0xFF94A3B8),
+                            color: isCheckedIn
+                                ? green
+                                : const Color(0xFF94A3B8),
                             shape: BoxShape.circle,
                           ),
                         ),

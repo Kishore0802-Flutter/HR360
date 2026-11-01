@@ -946,74 +946,96 @@ class _LoginPageState extends State<LoginPage> {
                             decoration: field(
                               'ahmed@hr360.dev',
                               Icons.mail_outline,
+                              suffix: recentEmails.isNotEmpty
+                                  ? PopupMenuButton<String>(
+                                      tooltip: 'Stored emails',
+                                      icon: const Icon(
+                                        Icons.arrow_drop_down,
+                                        color: Color(0xFF64748B),
+                                        size: 24,
+                                      ),
+                                      position: PopupMenuPosition.under,
+                                      elevation: 4,
+                                      color: Colors.white,
+                                      surfaceTintColor: Colors.white,
+                                      constraints: const BoxConstraints(
+                                        minWidth: 200,
+                                        maxWidth: 320,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        side: const BorderSide(
+                                          color: Color(0xFFE2E8F0),
+                                        ),
+                                      ),
+                                      onSelected: (email) {
+                                        setState(() {
+                                          id.text = email;
+                                          id.selection =
+                                              TextSelection.fromPosition(
+                                            TextPosition(offset: email.length),
+                                          );
+                                        });
+                                      },
+                                      itemBuilder: (context) => [
+                                        for (final email in recentEmails)
+                                          PopupMenuItem<String>(
+                                            value: email,
+                                            height: 40,
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const Icon(
+                                                  Icons.history,
+                                                  size: 15,
+                                                  color: Color(0xFF64748B),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Flexible(
+                                                  child: Text(
+                                                    email,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: TextStyle(
+                                                      fontSize: 13,
+                                                      fontWeight: id.text
+                                                                  .trim()
+                                                                  .toLowerCase() ==
+                                                              email
+                                                                  .toLowerCase()
+                                                          ? FontWeight.w600
+                                                          : FontWeight.w400,
+                                                      color: id.text
+                                                                  .trim()
+                                                                  .toLowerCase() ==
+                                                              email
+                                                                  .toLowerCase()
+                                                          ? const Color(
+                                                              0xFFBA4728)
+                                                          : const Color(
+                                                              0xFF1E293B),
+                                                    ),
+                                                  ),
+                                                ),
+                                                if (id.text
+                                                        .trim()
+                                                        .toLowerCase() ==
+                                                    email.toLowerCase()) ...[
+                                                  const SizedBox(width: 8),
+                                                  const Icon(
+                                                    Icons.check,
+                                                    size: 15,
+                                                    color: Color(0xFFBA4728),
+                                                  ),
+                                                ],
+                                              ],
+                                            ),
+                                          ),
+                                      ],
+                                    )
+                                  : null,
                             ),
                           ),
-                          if (recentEmails.isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
-                              children: recentEmails.map((email) {
-                                final isSelected =
-                                    id.text.trim().toLowerCase() ==
-                                    email.toLowerCase();
-                                return InkWell(
-                                  onTap: () {
-                                    setState(() {
-                                      id.text = email;
-                                      id.selection =
-                                          TextSelection.fromPosition(
-                                        TextPosition(offset: email.length),
-                                      );
-                                    });
-                                  },
-                                  borderRadius: BorderRadius.circular(16),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 5,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? const Color(0xFFFDF0E7)
-                                          : const Color(0xFFF4F6F8),
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(
-                                        color: isSelected
-                                            ? const Color(0xFFBA4728)
-                                            : const Color(0xFFE2E8F0),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          Icons.history,
-                                          size: 13,
-                                          color: isSelected
-                                              ? const Color(0xFFBA4728)
-                                              : const Color(0xFF64748B),
-                                        ),
-                                        const SizedBox(width: 5),
-                                        Text(
-                                          email,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: isSelected
-                                                ? FontWeight.w600
-                                                : FontWeight.w500,
-                                            color: isSelected
-                                                ? const Color(0xFFBA4728)
-                                                : const Color(0xFF334155),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ],
                           const SizedBox(height: 16),
                           const Text(
                             'Password',

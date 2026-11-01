@@ -5,6 +5,7 @@ import 'create_task.dart';
 import 'design.dart';
 import 'module_switch.dart';
 import 'scheduled_tasks.dart';
+import 'task_detail_sheet.dart';
 
 const _ink = Color(0xFF1B2A4A);
 const _soft = Color(0xFF8B93A7);
@@ -310,7 +311,7 @@ class _MyTasksPageState extends State<MyTasksPage> {
         emptyBody: mine
             ? 'Tasks assigned to you will show up here.'
             : 'No tasks match this view.',
-        itemBuilder: (row) => _TaskCard(row),
+        itemBuilder: (row) => _TaskCard(row, api: widget.api, onRefresh: load),
       ),
     );
   }
@@ -318,7 +319,9 @@ class _MyTasksPageState extends State<MyTasksPage> {
 
 class _TaskCard extends StatelessWidget {
   final Json task;
-  const _TaskCard(this.task);
+  final Api? api;
+  final VoidCallback? onRefresh;
+  const _TaskCard(this.task, {this.api, this.onRefresh});
 
   @override
   Widget build(BuildContext context) {
@@ -336,7 +339,18 @@ class _TaskCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
-        onTap: () => _showTask(context, task),
+        onTap: () {
+          if (api != null) {
+            TaskDetailSheet.show(
+              context,
+              task: task,
+              api: api!,
+              onRefreshNeeded: onRefresh,
+            );
+          } else {
+            _showTask(context, task);
+          }
+        },
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),

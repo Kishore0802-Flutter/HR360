@@ -5,6 +5,7 @@ import 'create_task.dart';
 import 'design.dart';
 import 'projects.dart';
 import 'scheduled_tasks.dart';
+import 'task_detail_sheet.dart';
 
 /// All Tasks page displaying paginated tasks from:
 /// `GET /tasks?page=$page&pageSize=$pageSize&sortDir=desc&sortBy=createdAt`
@@ -70,6 +71,7 @@ class _AllTasksPageState extends State<AllTasksPage> {
 
   // View Mode
   bool _isGridView = false;
+  bool _showFilters = false;
 
   // Lookups Data
   List<Json> _projects = [];
@@ -160,28 +162,28 @@ class _AllTasksPageState extends State<AllTasksPage> {
 
       if (!mounted) return;
       setState(() {
-        final pData = results[0];
+        final pData = results[0] is Map && results[0]['data'] != null ? results[0]['data'] : results[0];
         if (pData is Map && pData['items'] is List) {
           _projects = _asList(pData['items']);
         } else if (pData is List) {
           _projects = _asList(pData);
         }
 
-        final tData = results[1];
+        final tData = results[1] is Map && results[1]['data'] != null ? results[1]['data'] : results[1];
         if (tData is Map && tData['items'] is List) {
           _teams = _asList(tData['items']);
         } else if (tData is List) {
           _teams = _asList(tData);
         }
 
-        final cData = results[2];
+        final cData = results[2] is Map && results[2]['data'] != null ? results[2]['data'] : results[2];
         if (cData is Map && cData['items'] is List) {
           _categories = _asList(cData['items']);
         } else if (cData is List) {
           _categories = _asList(cData);
         }
 
-        final eData = results[3];
+        final eData = results[3] is Map && results[3]['data'] != null ? results[3]['data'] : results[3];
         if (eData is List) {
           _employees = _asList(eData);
         } else if (eData is Map && eData['items'] is List) {
@@ -261,15 +263,11 @@ class _AllTasksPageState extends State<AllTasksPage> {
 
       setState(() {
         final dataMap = res is Map ? Map<String, dynamic>.from(res) : <String, dynamic>{};
-        final items = dataMap['items'];
+        final innerData = dataMap['data'] is Map ? Map<String, dynamic>.from(dataMap['data']) : dataMap;
+        final items = innerData['items'] ?? dataMap['items'] ?? (res is List ? res : null);
 
         if (items is List) {
           _tasks = items
-              .whereType<Map>()
-              .map((row) => Map<String, dynamic>.from(row))
-              .toList();
-        } else if (res is List) {
-          _tasks = res
               .whereType<Map>()
               .map((row) => Map<String, dynamic>.from(row))
               .toList();
@@ -277,10 +275,17 @@ class _AllTasksPageState extends State<AllTasksPage> {
           _tasks = [];
         }
 
-        _page = (dataMap['page'] as num?)?.toInt() ?? _page;
-        _pageSize = (dataMap['pageSize'] as num?)?.toInt() ?? _pageSize;
-        _totalItems = (dataMap['totalItems'] as num?)?.toInt() ?? _tasks.length;
-        _totalPages = (dataMap['totalPages'] as num?)?.toInt() ??
+        _page = (innerData['page'] as num?)?.toInt() ??
+            (dataMap['page'] as num?)?.toInt() ??
+            _page;
+        _pageSize = (innerData['pageSize'] as num?)?.toInt() ??
+            (dataMap['pageSize'] as num?)?.toInt() ??
+            _pageSize;
+        _totalItems = (innerData['totalItems'] as num?)?.toInt() ??
+            (dataMap['totalItems'] as num?)?.toInt() ??
+            _tasks.length;
+        _totalPages = (innerData['totalPages'] as num?)?.toInt() ??
+            (dataMap['totalPages'] as num?)?.toInt() ??
             math.max(1, (_totalItems / _pageSize).ceil());
 
         _loading = false;
@@ -401,6 +406,7 @@ class _AllTasksPageState extends State<AllTasksPage> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
+        titleSpacing: 0,
         leading: Navigator.canPop(context)
             ? IconButton(
                 onPressed: () => Navigator.pop(context),
@@ -459,14 +465,14 @@ class _AllTasksPageState extends State<AllTasksPage> {
                   ),
                 );
               },
-              icon: const Icon(Icons.add_rounded, size: 17),
-              label: const Text('Create task', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+              icon: const Icon(Icons.add_rounded, size: 16),
+              label: const Text('Create', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
               style: FilledButton.styleFrom(
                 backgroundColor: _taskBrown,
                 foregroundColor: Colors.white,
-                minimumSize: const Size(0, 36),
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                minimumSize: const Size(0, 34),
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
             ),
           ),
@@ -475,75 +481,123 @@ class _AllTasksPageState extends State<AllTasksPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── Top Title & Subtitle Section (from Screenshot 1) ───
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'All tasks',
-                          style: TextStyle(
-                            color: _ink,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.4,
-                          ),
-                        ),
-                        SizedBox(height: 3),
-                        Text(
-                          'Every task you can see — filter by project, team, assignee, status, priority or due date.',
-                          style: TextStyle(color: _soft, fontSize: 12.5),
-                        ),
-                      ],
-                    ),
+            _buildTopSearchBar(),
+            if (_showFilters) _buildFullFilterPanel(),
+            _buildQuickStatusPills(),
+            Expanded(
+              child: _buildBody(),
+            ),
+            _buildPaginationBar(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Top Search & Filter Bar ──────────────────────────────────────────────
+  Widget _buildTopSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: SizedBox(
+              height: 38,
+              child: TextField(
+                controller: _searchCtrl,
+                onChanged: (v) {
+                  setState(() => _searchQuery = v.trim());
+                },
+                onSubmitted: (_) {
+                  setState(() => _page = 1);
+                  _loadTasks();
+                },
+                style: const TextStyle(fontSize: 13, color: _ink),
+                decoration: InputDecoration(
+                  hintText: 'By Task Name or Code',
+                  hintStyle: const TextStyle(color: Color(0xFF8B93A7), fontSize: 12.5),
+                  prefixIcon: const Icon(Icons.search_rounded, size: 18, color: Color(0xFF8B93A7)),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, size: 15, color: _soft),
+                          onPressed: () {
+                            _searchCtrl.clear();
+                            setState(() {
+                              _searchQuery = '';
+                              _page = 1;
+                            });
+                            _loadTasks();
+                          },
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFFDCD6CD)),
                   ),
-                  const SizedBox(width: 8),
-                  // Quick create button on top
-                  FilledButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => CreateTaskPage(
-                            api: api,
-                            onCreated: _loadTasks,
-                          ),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.add_rounded, size: 16),
-                    label: const Text('Create task', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: _taskBrown,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFFDCD6CD)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: _taskBrown, width: 1.5),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          InkWell(
+            onTap: () => setState(() => _showFilters = !_showFilters),
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              height: 38,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                color: _showFilters || _activeFiltersCount > 0
+                    ? const Color(0xFFFCE9DA)
+                    : Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: _showFilters || _activeFiltersCount > 0
+                      ? _taskBrown
+                      : const Color(0xFFDCD6CD),
+                  width: _showFilters || _activeFiltersCount > 0 ? 1.2 : 1.0,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.tune_rounded,
+                    size: 16,
+                    color: _showFilters || _activeFiltersCount > 0
+                        ? _taskBrown
+                        : _soft,
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    _activeFiltersCount > 0
+                        ? 'Filters ($_activeFiltersCount)'
+                        : 'Filters',
+                    style: TextStyle(
+                      color: _showFilters || _activeFiltersCount > 0
+                          ? _taskBrown
+                          : _ink,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
                     ),
                   ),
                 ],
               ),
             ),
-
-            // ── Comprehensive Filter Panel Card (Matching Screenshots 1 & 2) ──
-            _buildFullFilterPanel(),
-
-            // ── Quick Status Filter Pills (For test & fast 1-tap filter) ──
-            _buildQuickStatusPills(),
-
-            // ── Task List / Grid Content ──────────────────────────────
-            Expanded(
-              child: _buildBody(),
-            ),
-
-            // ── Pagination Footer ─────────────────────────────────────
-            _buildPaginationBar(),
-          ],
-        ),
+          ),
+          const SizedBox(width: 8),
+          _buildViewModeToggle(),
+        ],
       ),
     );
   }
@@ -565,9 +619,12 @@ class _AllTasksPageState extends State<AllTasksPage> {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 280),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
           // Row 1: By Task Name, By Status, By Priority, By Type
           LayoutBuilder(
             builder: (context, constraints) {
@@ -895,6 +952,8 @@ class _AllTasksPageState extends State<AllTasksPage> {
           ),
         ],
       ),
+        ),
+      ),
     );
   }
 
@@ -988,7 +1047,6 @@ class _AllTasksPageState extends State<AllTasksPage> {
           ),
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
             if (prefixIcon != null) ...[
               Icon(prefixIcon, size: 14.5, color: isActive ? _taskBrown : _soft),
@@ -1037,7 +1095,6 @@ class _AllTasksPageState extends State<AllTasksPage> {
           ),
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
             if (isSelected) ...[
               const Icon(Icons.check_rounded, size: 14, color: _taskBrown),
@@ -2193,7 +2250,7 @@ class _AllTasksPageState extends State<AllTasksPage> {
 }
 
 // ── Task Detail Bottom Sheet ──────────────────────────────────────────────
-class _TaskDetailSheet extends StatefulWidget {
+class _TaskDetailSheet extends StatelessWidget {
   final Json task;
   final Api api;
   final VoidCallback onRefreshNeeded;
@@ -2205,382 +2262,12 @@ class _TaskDetailSheet extends StatefulWidget {
   });
 
   @override
-  State<_TaskDetailSheet> createState() => _TaskDetailSheetState();
-}
-
-class _TaskDetailSheetState extends State<_TaskDetailSheet> {
-  bool _updatingStatus = false;
-
-  Json get task => widget.task;
-  Api get api => widget.api;
-
-  static const Color _ink = Color(0xFF1B2A4A);
-  static const Color _soft = Color(0xFF6E7C8A);
-  static const Color _line = Color(0xFFE2E8F0);
-  static const Color _taskBrown = Color(0xFFBE5E38);
-
-  Future<void> _updateStatus(String newStatus) async {
-    setState(() => _updatingStatus = true);
-    try {
-      final taskId = task['id']?.toString() ?? '';
-      await api.v1(
-        'PATCH',
-        '/tasks/$taskId/status',
-        body: {'status': newStatus},
-      );
-      if (!mounted) return;
-      message(context, 'Status updated to ${_pretty(newStatus)}');
-      widget.onRefreshNeeded();
-      Navigator.pop(context);
-    } catch (e) {
-      if (mounted) message(context, e);
-    } finally {
-      if (mounted) setState(() => _updatingStatus = false);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final project = task['project'] is Map ? Map<String, dynamic>.from(task['project']) : <String, dynamic>{};
-    final category = task['category'] is Map ? Map<String, dynamic>.from(task['category']) : <String, dynamic>{};
-    final creator = task['creator'] is Map ? Map<String, dynamic>.from(task['creator']) : <String, dynamic>{};
-    final schedule = task['schedule'] is Map ? Map<String, dynamic>.from(task['schedule']) : <String, dynamic>{};
-
-    final assignees = (task['assignees'] is List)
-        ? (task['assignees'] as List).whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList()
-        : <Json>[];
-
-    final watchers = (task['watchers'] is List)
-        ? (task['watchers'] as List).whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList()
-        : <Json>[];
-
-    final status = task['status']?.toString() ?? 'TODO';
-    final priority = task['priority']?.toString() ?? 'MEDIUM';
-    final isOverdue = task['isOverdue'] == true;
-
-    return SafeArea(
-      child: Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.88,
-        ),
-        child: Column(
-          children: [
-            // Drag handle
-            Padding(
-              padding: const EdgeInsets.only(top: 12, bottom: 8),
-              child: Container(
-                width: 38,
-                height: 4.5,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFD0D7DE),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-            ),
-
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-                children: [
-                  // Top Code + Priority + Status
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          task['code']?.toString() ?? 'TASK',
-                          style: const TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: _ink,
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-                      _badge(priority, const Color(0xFFFCE9DA), _taskBrown),
-                      const SizedBox(width: 6),
-                      _badge(status, const Color(0xFFEFF6FF), const Color(0xFF2563EB)),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Title
-                  Text(
-                    task['title']?.toString() ?? 'Task',
-                    style: const TextStyle(
-                      color: _ink,
-                      fontSize: 19,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-
-                  // Description
-                  if (task['description'] != null && task['description'].toString().isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: _line),
-                      ),
-                      child: Text(
-                        task['description'].toString(),
-                        style: const TextStyle(color: _ink, fontSize: 13.5, height: 1.4),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 16),
-
-                  // Project & Category Card
-                  _sectionHeader('Context'),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: _line),
-                    ),
-                    child: Column(
-                      children: [
-                        _detailRow('Project', project['name']?.toString() ?? 'None'),
-                        const Divider(height: 18, color: _line),
-                        _detailRow('Category', category['name']?.toString() ?? 'None'),
-                        const Divider(height: 18, color: _line),
-                        _detailRow('Task Type', _pretty(task['taskType']?.toString() ?? 'GENERAL')),
-                        if (creator['fullName'] != null) ...[
-                          const Divider(height: 18, color: _line),
-                          _detailRow('Created by', creator['fullName'].toString()),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Schedule Card
-                  _sectionHeader('Schedule'),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: _line),
-                    ),
-                    child: Column(
-                      children: [
-                        if (task['startAt'] != null)
-                          _detailRow('Starts At', _formatIso(task['startAt'].toString())),
-                        if (task['startAt'] != null)
-                          const Divider(height: 18, color: _line),
-                        _detailRow(
-                          'Due Date',
-                          task['dueAt'] != null
-                              ? '${_formatIso(task['dueAt'].toString())}${isOverdue ? ' (Overdue)' : ''}'
-                              : 'None',
-                        ),
-                        if (task['durationMinutes'] != null) ...[
-                          const Divider(height: 18, color: _line),
-                          _detailRow('Duration', '${task['durationMinutes']} mins'),
-                        ],
-                        if (task['timezone'] != null) ...[
-                          const Divider(height: 18, color: _line),
-                          _detailRow('Timezone', task['timezone'].toString()),
-                        ],
-                        if (schedule['summary'] != null) ...[
-                          const Divider(height: 18, color: _line),
-                          _detailRow('Recurrence', schedule['summary'].toString()),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // People
-                  _sectionHeader('People'),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: _line),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Assignees',
-                          style: TextStyle(color: _soft, fontSize: 12, fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 6),
-                        if (assignees.isEmpty)
-                          const Text('None', style: TextStyle(color: _ink, fontSize: 13))
-                        else
-                          for (final a in assignees)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              child: Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 12,
-                                    backgroundColor: const Color(0xFFFCE9DA),
-                                    child: Text(
-                                      (a['fullName']?.toString() ?? 'A')[0].toUpperCase(),
-                                      style: const TextStyle(fontSize: 10, color: _taskBrown, fontWeight: FontWeight.w700),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    a['fullName']?.toString() ?? '',
-                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _ink),
-                                  ),
-                                  if (a['employeeCode'] != null) ...[
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      '(${a['employeeCode']})',
-                                      style: const TextStyle(fontSize: 11.5, color: _soft),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                        if (watchers.isNotEmpty) ...[
-                          const Divider(height: 20, color: _line),
-                          const Text(
-                            'Watchers',
-                            style: TextStyle(color: _soft, fontSize: 12, fontWeight: FontWeight.w600),
-                          ),
-                          const SizedBox(height: 6),
-                          for (final w in watchers)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.visibility_outlined, size: 14, color: _soft),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    w['fullName']?.toString() ?? '',
-                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _ink),
-                                  ),
-                                ],
-                              ),
-                            ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Quick Action Buttons
-                  if (status != 'COMPLETED') ...[
-                    Row(
-                      children: [
-                        if (status != 'IN_PROGRESS')
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: _updatingStatus ? null : () => _updateStatus('IN_PROGRESS'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFF2563EB),
-                                side: const BorderSide(color: Color(0xFF2563EB)),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              ),
-                              child: const Text('Start task', style: TextStyle(fontWeight: FontWeight.w700)),
-                            ),
-                          ),
-                        if (status != 'IN_PROGRESS') const SizedBox(width: 10),
-                        Expanded(
-                          child: FilledButton(
-                            onPressed: _updatingStatus ? null : () => _updateStatus('COMPLETED'),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: const Color(0xFF16A34A),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                            child: const Text('Complete task', style: TextStyle(fontWeight: FontWeight.w700)),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+    return TaskDetailSheet(
+      task: task,
+      api: api,
+      onRefreshNeeded: onRefreshNeeded,
     );
-  }
-
-  Widget _sectionHeader(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        color: _ink,
-        fontSize: 14,
-        fontWeight: FontWeight.w800,
-      ),
-    );
-  }
-
-  Widget _detailRow(String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 90,
-          child: Text(
-            label,
-            style: const TextStyle(color: _soft, fontSize: 12.5, fontWeight: FontWeight.w500),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(color: _ink, fontSize: 12.5, fontWeight: FontWeight.w700),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _badge(String text, Color bg, Color fg) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
-      child: Text(
-        _pretty(text),
-        style: TextStyle(color: fg, fontSize: 11, fontWeight: FontWeight.w700),
-      ),
-    );
-  }
-
-  String _formatIso(String iso) {
-    final d = DateTime.tryParse(iso);
-    if (d == null) return iso;
-    final l = d.toLocal();
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return '${l.day} ${months[l.month - 1]} ${l.year}, ${l.hour.toString().padLeft(2, '0')}:${l.minute.toString().padLeft(2, '0')}';
-  }
-
-  String _pretty(String raw) {
-    if (raw.isEmpty) return '';
-    return raw
-        .replaceAll('_', ' ')
-        .toLowerCase()
-        .split(' ')
-        .map((w) => w.isEmpty ? '' : w[0].toUpperCase() + w.substring(1))
-        .join(' ');
   }
 }
 

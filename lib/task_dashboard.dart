@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'all_tasks.dart';
 import 'api.dart';
@@ -248,12 +247,6 @@ class _TaskDashboardState extends State<TaskDashboard> {
     final issues = _asMap(d['issues']);
     final (from, to) = range;
 
-    final trendList = _asList(d['trend']);
-    final byPriorityList = _asList(d['byPriority']);
-    final byTypeList = _asList(d['byType']);
-    final byProjectList = _asList(d['byProject']);
-    final byTeamList = _asList(d['byTeam']);
-
     final scopeSubtitle = switch (api.scope.toUpperCase()) {
       'ALL' => 'Organisation-wide view',
       'TEAM' => 'Your team',
@@ -290,32 +283,6 @@ class _TaskDashboardState extends State<TaskDashboard> {
 
             // ── 10 Stat Cards Grid ──────────────────────────────────────
             _buildStatCards(counts, issues),
-            const SizedBox(height: 16),
-
-            // ── Section 1: Distribution & Priority ──────────────────────
-            _buildDistributionAndPriorityRow(context, counts, byPriorityList, issues),
-            const SizedBox(height: 16),
-
-            // ── Section 2: Created vs Completed ─────────────────────────
-            _buildCreatedVsCompletedCard(trendList),
-            const SizedBox(height: 16),
-
-            // ── Section 3: By Task Type ─────────────────────────────────
-            _buildByTaskTypeCard(byTypeList),
-            const SizedBox(height: 16),
-
-            // ── Section 4: By Project ───────────────────────────────────
-            _buildByProjectCard(byProjectList),
-            const SizedBox(height: 16),
-
-            // ── Section 5: By Team ──────────────────────────────────────
-            if (!selfOnly || byTeamList.isNotEmpty) ...[
-              _buildByTeamCard(byTeamList),
-              const SizedBox(height: 16),
-            ],
-
-            // ── Section 6: Overdue by Project ───────────────────────────
-            _buildOverdueByProjectCard(byProjectList),
           ],
         ),
       ),
@@ -386,9 +353,9 @@ class _TaskDashboardState extends State<TaskDashboard> {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: _ink,
                   side: const BorderSide(color: Color(0xFFD0D7DE)),
-                  padding: const EdgeInsets.symmetric(vertical: 11),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
               ),
@@ -404,48 +371,13 @@ class _TaskDashboardState extends State<TaskDashboard> {
                   ),
                 );
               },
-              icon: const Icon(Icons.list_alt_rounded, color: _taskBrown),
+              icon: const Icon(Icons.list_alt_rounded, color: _taskBrown, size: 20),
               style: IconButton.styleFrom(
                 side: const BorderSide(color: Color(0xFFD0D7DE)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.all(11),
               ),
             ),
-            const SizedBox(width: 8),
-            IconButton(
-              tooltip: 'Scheduled tasks',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ScheduledTasksPage(api: api),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.repeat_rounded, color: _taskBrown),
-              style: IconButton.styleFrom(
-                side: const BorderSide(color: Color(0xFFD0D7DE)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
-            if (isAdmin) ...[
-              const SizedBox(width: 8),
-              IconButton(
-                tooltip: 'Projects',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ProjectsPage(api: api),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.folder_outlined, color: _taskBrown),
-                style: IconButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFFD0D7DE)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-            ],
             const SizedBox(width: 8),
             Expanded(
               child: FilledButton.icon(
@@ -468,9 +400,9 @@ class _TaskDashboardState extends State<TaskDashboard> {
                 style: FilledButton.styleFrom(
                   backgroundColor: _taskBrown,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 11),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
               ),
@@ -557,167 +489,146 @@ class _TaskDashboardState extends State<TaskDashboard> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
           // OPERATIONS SECTION
           const Text(
             'OPERATIONS',
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 10.5,
               fontWeight: FontWeight.w800,
               letterSpacing: 0.8,
               color: Color(0xFF94A3B8),
             ),
           ),
           const SizedBox(height: 8),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final crossAxisCount = constraints.maxWidth >= 720
-                  ? 4
-                  : (constraints.maxWidth >= 480 ? 3 : 2);
-              return GridView.count(
-                crossAxisCount: crossAxisCount,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
-                childAspectRatio: 2.2,
-                children: [
-                  _buildAdminTile(
-                    title: 'Outlet Tasks',
-                    subtitle: 'Store & site tasks',
-                    icon: Icons.playlist_add_check_rounded,
-                    iconColor: const Color(0xFFD97706),
-                    iconBg: const Color(0xFFFEF3C7),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => AllTasksPage(api: api, initialTaskType: 'OUTLET'),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildAdminTile(
-                    title: 'Outlets',
-                    subtitle: 'Branches & stores',
-                    icon: Icons.storefront_outlined,
-                    iconColor: const Color(0xFF0F766E),
-                    iconBg: const Color(0xFFCCFBF1),
-                    onTap: () => _showOutletsSheet(context),
-                  ),
-                  _buildAdminTile(
-                    title: 'Issues',
-                    subtitle: 'Blockers & reports',
-                    icon: Icons.warning_amber_rounded,
-                    iconColor: const Color(0xFFDC2626),
-                    iconBg: const Color(0xFFFEE2E2),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => IssuesPage(api: api),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildAdminTile(
-                    title: 'Calendar',
-                    subtitle: 'Monthly timeline',
-                    icon: Icons.calendar_month_outlined,
-                    iconColor: const Color(0xFF2563EB),
-                    iconBg: const Color(0xFFDBEAFE),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => TaskCalendarPage(api: api),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              );
-            },
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _adminQuickChip(
+                  icon: Icons.playlist_add_check_rounded,
+                  label: 'Outlet Tasks',
+                  color: const Color(0xFFD97706),
+                  iconBg: const Color(0xFFFEF3C7),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AllTasksPage(api: api, initialTaskType: 'OUTLET'),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(width: 8),
+                _adminQuickChip(
+                  icon: Icons.storefront_outlined,
+                  label: 'Outlets',
+                  color: const Color(0xFF0F766E),
+                  iconBg: const Color(0xFFCCFBF1),
+                  onTap: () => _showOutletsSheet(context),
+                ),
+                const SizedBox(width: 8),
+                _adminQuickChip(
+                  icon: Icons.warning_amber_rounded,
+                  label: 'Issues',
+                  color: const Color(0xFFDC2626),
+                  iconBg: const Color(0xFFFEE2E2),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => IssuesPage(api: api),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(width: 8),
+                _adminQuickChip(
+                  icon: Icons.calendar_month_outlined,
+                  label: 'Calendar',
+                  color: const Color(0xFF2563EB),
+                  iconBg: const Color(0xFFDBEAFE),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => TaskCalendarPage(api: api),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           const Divider(height: 1, color: Color(0xFFF1F5F9)),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
 
           // ADMINISTRATION SECTION
           const Text(
             'ADMINISTRATION',
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 10.5,
               fontWeight: FontWeight.w800,
               letterSpacing: 0.8,
               color: Color(0xFF94A3B8),
             ),
           ),
           const SizedBox(height: 8),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final crossAxisCount = constraints.maxWidth >= 720 ? 3 : 2;
-              return GridView.count(
-                crossAxisCount: crossAxisCount,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
-                childAspectRatio: 2.2,
-                children: [
-                  _buildAdminTile(
-                    title: 'Categories & Templates',
-                    subtitle: 'Taxonomy & presets',
-                    icon: Icons.local_offer_outlined,
-                    iconColor: const Color(0xFF7C3AED),
-                    iconBg: const Color(0xFFEDE9FE),
-                    onTap: () => _showCategoriesAndTemplatesSheet(context),
-                  ),
-                  _buildAdminTile(
-                    title: 'Scheduled Tasks',
-                    subtitle: 'Recurring routines',
-                    icon: Icons.repeat_rounded,
-                    iconColor: _taskBrown,
-                    iconBg: const Color(0xFFFCE9DA),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ScheduledTasksPage(api: api),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildAdminTile(
-                    title: 'Projects',
-                    subtitle: 'Active rollouts',
-                    icon: Icons.folder_outlined,
-                    iconColor: const Color(0xFF059669),
-                    iconBg: const Color(0xFFD1FAE5),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ProjectsPage(api: api),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              );
-            },
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _adminQuickChip(
+                  icon: Icons.local_offer_outlined,
+                  label: 'Categories & Templates',
+                  color: const Color(0xFF7C3AED),
+                  iconBg: const Color(0xFFEDE9FE),
+                  onTap: () => _showCategoriesAndTemplatesSheet(context),
+                ),
+                const SizedBox(width: 8),
+                _adminQuickChip(
+                  icon: Icons.repeat_rounded,
+                  label: 'Scheduled Tasks',
+                  color: _taskBrown,
+                  iconBg: const Color(0xFFFCE9DA),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ScheduledTasksPage(api: api),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(width: 8),
+                _adminQuickChip(
+                  icon: Icons.folder_outlined,
+                  label: 'Projects',
+                  color: const Color(0xFF059669),
+                  iconBg: const Color(0xFFD1FAE5),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ProjectsPage(api: api),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildAdminTile({
-    required String title,
-    required String subtitle,
+  Widget _adminQuickChip({
     required IconData icon,
-    required Color iconColor,
+    required String label,
+    required Color color,
     required Color iconBg,
     required VoidCallback onTap,
   }) {
@@ -728,49 +639,30 @@ class _TaskDashboardState extends State<TaskDashboard> {
         borderRadius: BorderRadius.circular(12),
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: const Color(0xFFE2E8F0)),
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 32,
-                height: 32,
+                width: 26,
+                height: 26,
                 decoration: BoxDecoration(
                   color: iconBg,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, size: 17, color: iconColor),
+                child: Icon(icon, size: 15, color: color),
               ),
               const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: _ink,
-                      ),
-                    ),
-                    const SizedBox(height: 1),
-                    Text(
-                      subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 10.5,
-                        color: _soft,
-                      ),
-                    ),
-                  ],
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: _ink,
                 ),
               ),
             ],
@@ -2014,649 +1906,6 @@ class _TaskDashboardState extends State<TaskDashboard> {
     );
   }
 
-  // ── Distribution & Priority Row ────────────────────────────────────────
-  Widget _buildDistributionAndPriorityRow(
-    BuildContext context,
-    Json counts,
-    List<Json> byPriority,
-    Json issues,
-  ) {
-    return Column(
-      children: [
-        // Status distribution card
-        _cardContainer(
-          title: 'Status distribution',
-          subtitle: 'Share of tasks by workflow status',
-          child: _buildStatusDonut(counts),
-        ),
-        const SizedBox(height: 16),
-
-        // By priority card
-        _cardContainer(
-          title: 'By priority',
-          subtitle: 'All matching tasks',
-          child: _buildPriorityGauge(byPriority),
-        ),
-        const SizedBox(height: 16),
-
-        // Issues by status card
-        _cardContainer(
-          title: 'Issues by status',
-          subtitle: '${_num(issues['highPriorityOpen'])} high/urgent still open',
-          trailing: widget.issuesTab == null
-              ? null
-              : TextButton(
-                  onPressed: () => widget.onTab(widget.issuesTab!),
-                  child: const Text(
-                    'View all',
-                    style: TextStyle(color: _taskBrown, fontWeight: FontWeight.w700),
-                  ),
-                ),
-          child: _buildIssuesWidget(issues),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatusDonut(Json counts) {
-    final parts = [
-      ('To do', _num(counts['todo']), const Color(0xFFB9A58F)),
-      ('In progress', _num(counts['inProgress']), _blue),
-      ('Completed', _num(counts['completed']), _green),
-    ];
-    final total = _num(counts['total']);
-
-    return Row(
-      children: [
-        SizedBox(
-          width: 120,
-          height: 120,
-          child: CustomPaint(
-            painter: _DonutRingPainter([for (final p in parts) (p.$2, p.$3)]),
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '$total',
-                    style: const TextStyle(
-                      color: _ink,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const Text(
-                    'tasks',
-                    style: TextStyle(color: _soft, fontSize: 11),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 18),
-        Expanded(
-          child: Column(
-            children: [
-              for (final p in parts)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          color: p.$3,
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          p.$1,
-                          style: const TextStyle(color: _ink, fontSize: 12.5),
-                        ),
-                      ),
-                      Text(
-                        '${p.$2}',
-                        style: const TextStyle(
-                          color: _ink,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPriorityGauge(List<Json> byPriority) {
-    final total = byPriority.fold<int>(0, (sum, p) => sum + _num(p['total']));
-    if (total == 0) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 16),
-        child: Center(
-          child: Text('No tasks matching current filters', style: TextStyle(color: _soft)),
-        ),
-      );
-    }
-
-    Color colorForPriority(String key) {
-      return switch (key.toUpperCase()) {
-        'URGENT' => _red,
-        'HIGH' => _taskBrown,
-        'MEDIUM' => _amber,
-        'LOW' => const Color(0xFF92400E),
-        _ => _soft,
-      };
-    }
-
-    final segments = [
-      for (final p in byPriority)
-        (
-          _pretty(p['key']?.toString() ?? ''),
-          _num(p['total']),
-          colorForPriority(p['key']?.toString() ?? ''),
-        ),
-    ];
-
-    return Column(
-      children: [
-        SizedBox(
-          height: 110,
-          child: CustomPaint(
-            size: const Size(180, 110),
-            painter: _PriorityArcPainter(
-              [for (final s in segments) (s.$2, s.$3)],
-            ),
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '$total',
-                      style: const TextStyle(
-                        color: _ink,
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const Text(
-                      'Tasks',
-                      style: TextStyle(
-                        color: _soft,
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 12,
-          runSpacing: 6,
-          alignment: WrapAlignment.center,
-          children: [
-            for (final s in segments)
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(color: s.$3, shape: BoxShape.circle),
-                  ),
-                  const SizedBox(width: 5),
-                  Text(
-                    '${s.$1} ${s.$2}',
-                    style: const TextStyle(
-                      color: _ink,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildIssuesWidget(Json issues) {
-    final total = _num(issues['total']);
-    if (total == 0) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 24),
-        alignment: Alignment.center,
-        child: Column(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF6F4EB),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: const Icon(
-                Icons.inbox_outlined,
-                color: Color(0xFF8B93A7),
-                size: 24,
-              ),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'No issues reported',
-              style: TextStyle(
-                color: _soft,
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final items = [
-      ('Open', _num(issues['open']), _red),
-      ('In progress', _num(issues['inProgress']), _amber),
-      ('Resolved', _num(issues['resolved']), _green),
-    ];
-
-    return Row(
-      children: [
-        for (var i = 0; i < items.length; i++) ...[
-          if (i > 0) const SizedBox(width: 8),
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _line),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    items[i].$1,
-                    style: const TextStyle(color: _soft, fontSize: 11),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${items[i].$2}',
-                    style: TextStyle(
-                      color: items[i].$3,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  // ── Created vs Completed Bar Chart ─────────────────────────────────────
-  Widget _buildCreatedVsCompletedCard(List<Json> trend) {
-    if (trend.isEmpty) {
-      return _cardContainer(
-        title: 'Created vs completed',
-        subtitle: 'Per ${grain.name}',
-        child: const Padding(
-          padding: EdgeInsets.symmetric(vertical: 20),
-          child: Center(
-            child: Text(
-              'No task activity in this range.',
-              style: TextStyle(color: _soft, fontSize: 12.5),
-            ),
-          ),
-        ),
-      );
-    }
-
-    final groups = <_BarGroupData>[];
-    for (final p in trend) {
-      final period = p['period']?.toString() ?? '';
-      final created = _num(p['created']).toDouble();
-      final completed = _num(p['completed']).toDouble();
-      groups.add(
-        _BarGroupData(
-          label: _formatPeriodLabel(period),
-          bars: [
-            _BarData('Completed', completed, _green),
-            _BarData('Created', created, _taskBrown),
-          ],
-        ),
-      );
-    }
-
-    return _cardContainer(
-      title: 'Created vs completed',
-      subtitle: 'Per ${grain.name}',
-      child: _VerticalGroupedBarChart(
-        groups: groups,
-        legend: const [
-          ('Completed', _green),
-          ('Created', _taskBrown),
-        ],
-      ),
-    );
-  }
-
-  // ── By Task Type Donut Chart ───────────────────────────────────────────
-  Widget _buildByTaskTypeCard(List<Json> byType) {
-    final total = byType.fold<int>(0, (sum, p) => sum + _num(p['total']));
-    if (total == 0) {
-      return _cardContainer(
-        title: 'By task type',
-        child: const Padding(
-          padding: EdgeInsets.symmetric(vertical: 20),
-          child: Center(
-            child: Text('No task type data', style: TextStyle(color: _soft)),
-          ),
-        ),
-      );
-    }
-
-    Color colorForType(int idx) {
-      final palette = [_taskBrown, _blue, _purple, _teal, _amber];
-      return palette[idx % palette.length];
-    }
-
-    final slices = <(int, Color)>[];
-    final legendItems = <(String, int, double, Color)>[];
-    for (var i = 0; i < byType.length; i++) {
-      final item = byType[i];
-      final key = _pretty(item['key']?.toString() ?? '');
-      final count = _num(item['total']);
-      final pct = total > 0 ? (count / total) * 100 : 0.0;
-      final c = colorForType(i);
-      slices.add((count, c));
-      legendItems.add((key, count, pct, c));
-    }
-
-    return _cardContainer(
-      title: 'By task type',
-      child: Column(
-        children: [
-          SizedBox(
-            width: 140,
-            height: 140,
-            child: CustomPaint(
-              painter: _DonutRingPainter(slices),
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '$total',
-                      style: const TextStyle(
-                        color: _ink,
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const Text(
-                      'Tasks',
-                      style: TextStyle(
-                        color: _soft,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 16,
-            runSpacing: 8,
-            alignment: WrapAlignment.center,
-            children: [
-              for (final leg in legendItems)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(color: leg.$4, shape: BoxShape.circle),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '${leg.$1}  ${leg.$2}  ${leg.$3.toStringAsFixed(0)}%',
-                      style: const TextStyle(
-                        color: _ink,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── By Project Bar Chart ───────────────────────────────────────────────
-  Widget _buildByProjectCard(List<Json> byProject) {
-    if (byProject.isEmpty) {
-      return _cardContainer(
-        title: 'By project',
-        subtitle: 'Open vs completed',
-        child: const Padding(
-          padding: EdgeInsets.symmetric(vertical: 20),
-          child: Center(
-            child: Text('No project data', style: TextStyle(color: _soft)),
-          ),
-        ),
-      );
-    }
-
-    final groups = <_BarGroupData>[];
-    for (final p in byProject) {
-      final name = p['key']?.toString() ?? 'Project';
-      final total = _num(p['total']).toDouble();
-      final completed = _num(p['completed']).toDouble();
-      final open = math.max(0.0, total - completed);
-      groups.add(
-        _BarGroupData(
-          label: name,
-          bars: [
-            _BarData('Completed', completed, _green),
-            _BarData('Open', open, _taskBrown),
-          ],
-        ),
-      );
-    }
-
-    return _cardContainer(
-      title: 'By project',
-      subtitle: 'Open vs completed',
-      child: _VerticalGroupedBarChart(
-        groups: groups,
-        legend: const [
-          ('Completed', _green),
-          ('Open', _taskBrown),
-        ],
-      ),
-    );
-  }
-
-  // ── By Team Bar Chart ──────────────────────────────────────────────────
-  Widget _buildByTeamCard(List<Json> byTeam) {
-    if (byTeam.isEmpty) {
-      return _cardContainer(
-        title: 'By team',
-        subtitle: 'Open vs completed',
-        child: const Padding(
-          padding: EdgeInsets.symmetric(vertical: 20),
-          child: Center(
-            child: Text('No team data', style: TextStyle(color: _soft)),
-          ),
-        ),
-      );
-    }
-
-    final groups = <_BarGroupData>[];
-    for (final t in byTeam) {
-      final name = t['key']?.toString() ?? 'Team';
-      final total = _num(t['total']).toDouble();
-      final completed = _num(t['completed']).toDouble();
-      final open = math.max(0.0, total - completed);
-      groups.add(
-        _BarGroupData(
-          label: name,
-          bars: [
-            _BarData('Completed', completed, _green),
-            _BarData('Open', open, _teal),
-          ],
-        ),
-      );
-    }
-
-    return _cardContainer(
-      title: 'By team',
-      subtitle: 'Open vs completed',
-      child: _VerticalGroupedBarChart(
-        groups: groups,
-        legend: const [
-          ('Completed', _green),
-          ('Open', _teal),
-        ],
-      ),
-    );
-  }
-
-  // ── Overdue by Project Bar Chart ───────────────────────────────────────
-  Widget _buildOverdueByProjectCard(List<Json> byProject) {
-    final overdueProjects = byProject.where((p) => _num(p['overdue']) > 0).toList();
-
-    if (overdueProjects.isEmpty) {
-      return _cardContainer(
-        title: 'Overdue by project',
-        child: const Padding(
-          padding: EdgeInsets.symmetric(vertical: 20),
-          child: Center(
-            child: Text(
-              'No overdue tasks across projects.',
-              style: TextStyle(color: _soft, fontSize: 12.5),
-            ),
-          ),
-        ),
-      );
-    }
-
-    final groups = <_BarGroupData>[];
-    for (final p in overdueProjects) {
-      final name = p['key']?.toString() ?? 'Project';
-      final overdue = _num(p['overdue']).toDouble();
-      groups.add(
-        _BarGroupData(
-          label: name,
-          bars: [
-            _BarData('Overdue', overdue, _red),
-          ],
-        ),
-      );
-    }
-
-    return _cardContainer(
-      title: 'Overdue by project',
-      child: _VerticalGroupedBarChart(
-        groups: groups,
-        legend: const [
-          ('Overdue', _red),
-        ],
-      ),
-    );
-  }
-
-  // ── Card Helper ────────────────────────────────────────────────────────
-  Widget _cardContainer({
-    required String title,
-    String? subtitle,
-    Widget? trailing,
-    required Widget child,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _line),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x061B2A4A),
-            blurRadius: 10,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: _ink,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    if (subtitle != null) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        style: const TextStyle(color: _soft, fontSize: 11.5),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              trailing ??
-                  const Icon(
-                    Icons.grid_view_outlined,
-                    color: Color(0xFFCBD5E1),
-                    size: 18,
-                  ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          child,
-        ],
-      ),
-    );
-  }
-
   // ── Helpers ────────────────────────────────────────────────────────────
   String _formatDay(DateTime d) {
     const months = [
@@ -2674,15 +1923,6 @@ class _TaskDashboardState extends State<TaskDashboard> {
     return '${d.day} ${months[d.month - 1]}';
   }
 
-  String _formatPeriodLabel(String raw) {
-    final d = DateTime.tryParse(raw);
-    if (d == null) return raw;
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    return '${d.day} ${months[d.month - 1]}';
-  }
 
   String _pretty(String key) {
     if (key.isEmpty) return '';
@@ -2929,302 +2169,6 @@ class _StatCardData {
     required this.iconColor,
     required this.iconBg,
   });
-}
-
-// ── Bar Chart Data Models ─────────────────────────────────────────────────
-class _BarData {
-  final String name;
-  final double value;
-  final Color color;
-  _BarData(this.name, this.value, this.color);
-}
-
-class _BarGroupData {
-  final String label;
-  final List<_BarData> bars;
-  _BarGroupData({required this.label, required this.bars});
-}
-
-// ── Grouped Vertical Bar Chart with Gridlines & Y-Axis ────────────────────
-class _VerticalGroupedBarChart extends StatelessWidget {
-  final List<_BarGroupData> groups;
-  final List<(String, Color)> legend;
-
-  const _VerticalGroupedBarChart({
-    required this.groups,
-    required this.legend,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (groups.isEmpty) return const SizedBox.shrink();
-
-    // Determine max value for Y-axis
-    double peak = 1.0;
-    for (final g in groups) {
-      for (final b in g.bars) {
-        if (b.value > peak) peak = b.value;
-      }
-    }
-    // Round peak up to a nice integer
-    final yMax = peak <= 4 ? 4.0 : (peak <= 10 ? 10.0 : ((peak / 5).ceil() * 5).toDouble());
-    final ticks = [yMax, yMax * 0.75, yMax * 0.5, yMax * 0.25, 0.0];
-
-    return Column(
-      children: [
-        SizedBox(
-          height: 180,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Y-Axis tick labels
-              SizedBox(
-                width: 22,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    for (final t in ticks)
-                      Text(
-                        t.toInt().toString(),
-                        style: const TextStyle(
-                          color: Color(0xFF8B93A7),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    const SizedBox(height: 18), // clearance for X-axis labels
-                  ],
-                ),
-              ),
-
-              // Bars & Grid lines
-              Expanded(
-                child: Stack(
-                  children: [
-                    // Dashed horizontal gridlines
-                    Positioned.fill(
-                      bottom: 22,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          for (var i = 0; i < ticks.length; i++)
-                            const _DashedLine(color: Color(0xFFE2E8F0)),
-                        ],
-                      ),
-                    ),
-
-                    // Groups of bars
-                    Positioned.fill(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          for (final g in groups)
-                            Expanded(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  // Bars
-                                  Expanded(
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      crossAxisAlignment: CrossAxisAlignment.end,
-                                      children: [
-                                        for (final b in g.bars)
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(horizontal: 2),
-                                            child: FractionallySizedBox(
-                                              heightFactor: (b.value / yMax).clamp(0.01, 1.0),
-                                              alignment: Alignment.bottomCenter,
-                                              child: Container(
-                                                width: 14,
-                                                decoration: BoxDecoration(
-                                                  color: b.color,
-                                                  borderRadius: const BorderRadius.vertical(
-                                                    top: Radius.circular(4),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  // X-axis label
-                                  SizedBox(
-                                    height: 16,
-                                    child: Text(
-                                      g.label,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        color: Color(0xFF6E7C8A),
-                                        fontSize: 10.5,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-
-        // Legend
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            for (var i = 0; i < legend.length; i++) ...[
-              if (i > 0) const SizedBox(width: 16),
-              Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  color: legend[i].$2,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                legend[i].$1,
-                style: const TextStyle(
-                  color: Color(0xFF1B2A4A),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-// ── Horizontal Dashed Line ────────────────────────────────────────────────
-class _DashedLine extends StatelessWidget {
-  final Color color;
-  const _DashedLine({required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final boxWidth = constraints.constrainWidth();
-        const dashWidth = 4.0;
-        const dashSpace = 4.0;
-        final dashCount = (boxWidth / (dashWidth + dashSpace)).floor();
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: List.generate(dashCount, (_) {
-            return SizedBox(
-              width: dashWidth,
-              height: 1,
-              child: DecoratedBox(
-                decoration: BoxDecoration(color: color),
-              ),
-            );
-          }),
-        );
-      },
-    );
-  }
-}
-
-// ── Priority Arc Gauge CustomPainter ──────────────────────────────────────
-class _PriorityArcPainter extends CustomPainter {
-  final List<(int count, Color color)> parts;
-  _PriorityArcPainter(this.parts);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    const strokeWidth = 22.0;
-    final center = Offset(size.width / 2, size.height);
-    final radius = size.height - strokeWidth / 2;
-    final rect = Rect.fromCircle(center: center, radius: radius);
-
-    // Track
-    final trackPaint = Paint()
-      ..color = const Color(0xFFF1F5F9)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.butt;
-    canvas.drawArc(rect, math.pi, math.pi, false, trackPaint);
-
-    final total = parts.fold<int>(0, (sum, p) => sum + p.$1);
-    if (total == 0) return;
-
-    var start = math.pi;
-    for (final p in parts) {
-      if (p.$1 <= 0) continue;
-      final sweep = math.pi * (p.$1 / total);
-      final segmentPaint = Paint()
-        ..color = p.$2
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeWidth
-        ..strokeCap = StrokeCap.butt;
-      canvas.drawArc(rect, start, sweep, false, segmentPaint);
-      start += sweep;
-    }
-  }
-
-  @override
-  bool shouldRepaint(_PriorityArcPainter oldDelegate) => true;
-}
-
-// ── Donut Ring Painter ────────────────────────────────────────────────────
-class _DonutRingPainter extends CustomPainter {
-  final List<(int count, Color color)> parts;
-  _DonutRingPainter(this.parts);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    const stroke = 18.0;
-    final rect = (Offset.zero & size).deflate(stroke / 2);
-    final total = parts.fold<int>(0, (sum, p) => sum + p.$1);
-
-    final track = Paint()
-      ..color = const Color(0xFFF0F2F5)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = stroke;
-    canvas.drawArc(rect, 0, math.pi * 2, false, track);
-
-    if (total == 0) return;
-    final visible = parts.where((p) => p.$1 > 0).length;
-    final gap = visible > 1 ? 0.05 : 0.0;
-    var start = -math.pi / 2;
-
-    for (final part in parts) {
-      if (part.$1 <= 0) continue;
-      final sweep = math.pi * 2 * part.$1 / total;
-      final paint = Paint()
-        ..color = part.$2
-        ..style = PaintingStyle.stroke
-        ..strokeCap = visible > 1 ? StrokeCap.butt : StrokeCap.round
-        ..strokeWidth = stroke;
-      canvas.drawArc(
-        rect,
-        start + gap / 2,
-        math.max(0.001, sweep - gap),
-        false,
-        paint,
-      );
-      start += sweep;
-    }
-  }
-
-  @override
-  bool shouldRepaint(_DonutRingPainter old) => true;
 }
 
 // ── Generic Cast Helpers ──────────────────────────────────────────────────
