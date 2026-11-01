@@ -1,7 +1,7 @@
 name: hr360_mobile
 description: HR360 employee and manager mobile application.
 publish_to: none
-version: 1.0.0+1
+version: 1.0.1+2
 environment:
   sdk: '>=3.8.0 <4.0.0'
 dependencies:
@@ -37,5 +37,7 @@ flutter_launcher_icons:
   android: true
   ios: true
   image_path: assets/logo.png
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: assets/app_icon_foreground.png
   remove_alpha_ios: true
   min_sdk_android: 23

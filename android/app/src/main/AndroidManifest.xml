@@ -6,7 +6,7 @@
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-feature android:name="android.hardware.camera.front" android:required="false"/>
     <application android:allowBackup="false"
-        android:label="HR#360"
+        android:label="HR360"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
