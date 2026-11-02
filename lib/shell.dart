@@ -39,6 +39,7 @@ class _Tab {
 class _ShellState extends State<Shell> {
   int index = 0;
   int taskIndex = 0;
+  String approvalsKind = 'Leave';
   AppModule module = AppModule.hrms;
 
   Api get api => widget.api;
@@ -73,7 +74,10 @@ class _ShellState extends State<Shell> {
       : null;
 
   List<_Tab> get hrmsTabs {
-    void go(int i) => setState(() => index = i);
+    void go(int i, {String? kind}) => setState(() {
+      index = i;
+      if (kind != null) approvalsKind = kind;
+    });
     final leader = api.live && api.role != null && api.role != 'employee';
     return [
       _Tab(
@@ -81,8 +85,17 @@ class _ShellState extends State<Shell> {
         Icons.home_outlined,
         Icons.home_rounded,
         leader
-            ? RoleDashboard(api: api, onTab: go, moduleSwitch: moduleSwitch)
-            : HomePage(api: api, onTab: go, moduleSwitch: moduleSwitch),
+            ? RoleDashboard(
+                api: api,
+                onTab: (i) => go(i),
+                onNavigate: (i, {subTab}) => go(i, kind: subTab),
+                moduleSwitch: moduleSwitch,
+              )
+            : HomePage(
+                api: api,
+                onTab: (i) => go(i),
+                moduleSwitch: moduleSwitch,
+              ),
       ),
       _Tab(
         'Attendance',
@@ -96,7 +109,12 @@ class _ShellState extends State<Shell> {
           'Approvals',
           Icons.verified_user_outlined,
           Icons.verified_user_rounded,
-          RequestsPage(api: api, mode: 'approvals'),
+          RequestsPage(
+            key: ValueKey('approvals_$approvalsKind'),
+            api: api,
+            mode: 'approvals',
+            initialKind: approvalsKind,
+          ),
         ),
       _Tab(
         'Profile',

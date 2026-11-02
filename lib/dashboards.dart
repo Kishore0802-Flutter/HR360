@@ -25,11 +25,13 @@ enum DashPeriod { today, week, month }
 class RoleDashboard extends StatefulWidget {
   final Api api;
   final ValueChanged<int> onTab;
+  final void Function(int tab, {String? subTab})? onNavigate;
   final Widget? moduleSwitch;
   const RoleDashboard({
     super.key,
     required this.api,
     required this.onTab,
+    this.onNavigate,
     this.moduleSwitch,
   });
 
@@ -48,6 +50,14 @@ class _RoleDashboardState extends State<RoleDashboard> {
   Api get api => widget.api;
   String get role => api.role ?? 'manager';
   int get profileTab => api.manager ? 4 : 3;
+
+  void _navigateToApprovals(String kind) {
+    if (widget.onNavigate != null) {
+      widget.onNavigate!(3, subTab: kind);
+    } else {
+      widget.onTab(3);
+    }
+  }
 
   @override
   void initState() {
@@ -173,7 +183,16 @@ class _RoleDashboardState extends State<RoleDashboard> {
     final pipeline = _Card(
       title: 'Leave & regularisation',
       subtitle: _rangeText(),
-      child: _Pipeline(leave: leave, regularisation: regularisation),
+      child: _Pipeline(
+        leave: leave,
+        regularisation: regularisation,
+        onLeaveTap: (api.can('leave:approve') || api.manager)
+            ? () => _navigateToApprovals('Leave')
+            : null,
+        onRegularisationTap: (api.can('regularisations:approve') || api.manager)
+            ? () => _navigateToApprovals('Attendance')
+            : null,
+      ),
     );
     final headcount = _map(d['headcount']);
     final departments = _Card(
@@ -186,11 +205,6 @@ class _RoleDashboardState extends State<RoleDashboard> {
       subtitle: 'Roles across the organisation',
       child: _Chips(_list(headcount['byDesignation'])),
     );
-    final picker = _PeriodPicker(
-      period: period,
-      range: _rangeText(),
-      onChanged: setPeriod,
-    );
     final shortcuts = _Shortcuts(api);
     Widget gap(Widget w) =>
         Padding(padding: const EdgeInsets.only(top: 14), child: w);
@@ -198,7 +212,6 @@ class _RoleDashboardState extends State<RoleDashboard> {
       case 'hr':
         return [
           gap(shortcuts),
-          gap(picker),
           gap(departments),
           gap(designations),
           gap(pipeline),
@@ -206,7 +219,6 @@ class _RoleDashboardState extends State<RoleDashboard> {
       case 'admin':
         return [
           gap(shortcuts),
-          gap(picker),
           gap(departments),
           gap(pipeline),
         ];
@@ -216,10 +228,15 @@ class _RoleDashboardState extends State<RoleDashboard> {
             _ActionCards(
               leave: _n(leave['pending']),
               regularisation: _n(regularisation['pending']),
-              onReview: api.can('leave:approve') ? () => widget.onTab(3) : null,
+              onLeaveReview: (api.can('leave:approve') || api.manager)
+                  ? () => _navigateToApprovals('Leave')
+                  : null,
+              onRegularisationReview:
+                  (api.can('regularisations:approve') || api.manager)
+                      ? () => _navigateToApprovals('Attendance')
+                      : null,
             ),
           ),
-          gap(picker),
           gap(shortcuts),
         ];
     }
@@ -770,124 +787,16 @@ class _Pill extends StatelessWidget {
   );
 }
 
-class _PeriodPicker extends StatelessWidget {
-  final DashPeriod period;
-  final String range;
-  final ValueChanged<DashPeriod> onChanged;
-  const _PeriodPicker({
-    required this.period,
-    required this.range,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: _line),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFCE9DA),
-                borderRadius: BorderRadius.circular(11),
-              ),
-              child: const Icon(
-                Icons.tune_rounded,
-                size: 18,
-                color: Color(0xFFC2570C),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Period',
-                    style: TextStyle(
-                      color: _ink,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 14,
-                    ),
-                  ),
-                  Text(
-                    range,
-                    style: const TextStyle(color: _soft, fontSize: 11.5),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF3F5F7),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Row(
-            children: [
-              for (final item in DashPeriod.values)
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => onChanged(item),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 220),
-                      padding: const EdgeInsets.symmetric(vertical: 9),
-                      decoration: BoxDecoration(
-                        color: item == period
-                            ? Colors.white
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(11),
-                        boxShadow: item == period
-                            ? const [
-                                BoxShadow(
-                                  color: Color(0x141B2A4A),
-                                  blurRadius: 8,
-                                  offset: Offset(0, 2),
-                                ),
-                              ]
-                            : null,
-                      ),
-                      child: Text(
-                        switch (item) {
-                          DashPeriod.today => 'Today',
-                          DashPeriod.week => 'This week',
-                          DashPeriod.month => 'This month',
-                        },
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: item == period ? _ink : _soft,
-                          fontWeight: item == period
-                              ? FontWeight.w800
-                              : FontWeight.w600,
-                          fontSize: 12.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
 class _Pipeline extends StatelessWidget {
   final Json leave, regularisation;
-  const _Pipeline({required this.leave, required this.regularisation});
+  final VoidCallback? onLeaveTap;
+  final VoidCallback? onRegularisationTap;
+  const _Pipeline({
+    required this.leave,
+    required this.regularisation,
+    this.onLeaveTap,
+    this.onRegularisationTap,
+  });
   @override
   Widget build(BuildContext context) => Column(
     children: [
@@ -896,6 +805,7 @@ class _Pipeline extends StatelessWidget {
         Icons.beach_access_outlined,
         leave,
         '${_n(leave['approvedDays'])} approved days',
+        onTap: onLeaveTap,
       ),
       const Divider(height: 22, color: _line),
       _row(
@@ -903,80 +813,108 @@ class _Pipeline extends StatelessWidget {
         Icons.edit_calendar_outlined,
         regularisation,
         'Attendance corrections',
+        onTap: onRegularisationTap,
       ),
     ],
   );
 
-  Widget _row(String title, IconData icon, Json data, String note) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Row(
-        children: [
-          Icon(icon, size: 18, color: _ink),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: _ink,
-                fontWeight: FontWeight.w700,
-                fontSize: 13.5,
+  Widget _row(
+    String title,
+    IconData icon,
+    Json data,
+    String note, {
+    VoidCallback? onTap,
+  }) {
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 18, color: _ink),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: _ink,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13.5,
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              note,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.right,
-              style: const TextStyle(color: _soft, fontSize: 11),
-            ),
-          ),
-        ],
-      ),
-      const SizedBox(height: 10),
-      Row(
-        children: [
-          for (final item in [
-            ('Pending', data['pending'], _amber),
-            ('Approved', data['approved'], primary),
-            ('Rejected', data['rejected'], _red),
-          ]) ...[
+            const SizedBox(width: 8),
             Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                margin: EdgeInsets.only(right: item.$1 == 'Rejected' ? 0 : 8),
-                decoration: BoxDecoration(
-                  color: item.$3.withValues(alpha: 0.09),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      '${_n(item.$2)}',
-                      style: TextStyle(
-                        color: item.$3,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 18,
-                      ),
-                    ),
-                    Text(
-                      item.$1,
-                      style: const TextStyle(color: _soft, fontSize: 11),
-                    ),
-                  ],
-                ),
+              child: Text(
+                note,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.right,
+                style: const TextStyle(color: _soft, fontSize: 11),
               ),
             ),
+            if (onTap != null) ...[
+              const SizedBox(width: 4),
+              const Icon(Icons.arrow_forward_rounded, size: 14, color: _soft),
+            ],
           ],
-        ],
-      ),
-    ],
-  );
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            for (final item in [
+              ('Pending', data['pending'], _amber),
+              ('Approved', data['approved'], primary),
+              ('Rejected', data['rejected'], _red),
+            ]) ...[
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  margin: EdgeInsets.only(right: item.$1 == 'Rejected' ? 0 : 8),
+                  decoration: BoxDecoration(
+                    color: item.$3.withValues(alpha: 0.09),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        '${_n(item.$2)}',
+                        style: TextStyle(
+                          color: item.$3,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 18,
+                        ),
+                      ),
+                      Text(
+                        item.$1,
+                        style: const TextStyle(color: _soft, fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ],
+    );
+
+    if (onTap != null) {
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: content,
+          ),
+        ),
+      );
+    }
+    return content;
+  }
 }
 
 class _Bars extends StatelessWidget {
@@ -1082,12 +1020,15 @@ class _Chips extends StatelessWidget {
 
 class _ActionCards extends StatelessWidget {
   final int leave, regularisation;
-  final VoidCallback? onReview;
+  final VoidCallback? onLeaveReview;
+  final VoidCallback? onRegularisationReview;
   const _ActionCards({
     required this.leave,
     required this.regularisation,
-    required this.onReview,
-  });
+    VoidCallback? onLeaveReview,
+    this.onRegularisationReview,
+    VoidCallback? onReview,
+  }) : onLeaveReview = onLeaveReview ?? onReview;
 
   @override
   Widget build(BuildContext context) {
@@ -1170,7 +1111,7 @@ class _ActionCards extends StatelessWidget {
               leave,
               Icons.beach_access_outlined,
               _violet,
-              onReview,
+              onLeaveReview,
             ),
             const SizedBox(width: 10),
             card(
@@ -1178,11 +1119,7 @@ class _ActionCards extends StatelessWidget {
               regularisation,
               Icons.edit_calendar_outlined,
               _amber,
-              () => comingSoon(
-                context,
-                'Regularisation review',
-                'Reviewing attendance corrections from the app is coming soon.',
-              ),
+              onRegularisationReview,
             ),
           ],
         ),

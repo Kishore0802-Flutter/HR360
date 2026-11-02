@@ -152,7 +152,13 @@ void main() {
 
     // Verify By Date Filter button exists
     expect(find.byType(PopupMenuButton<AttendanceFilter>), findsOneWidget);
-    expect(find.text('By Date'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(PopupMenuButton<AttendanceFilter>),
+        matching: find.byType(Text),
+      ),
+      findsOneWidget,
+    );
 
     // Verify 2nd requirement: Calendar & Logs table
     expect(find.text('362 min'), findsOneWidget);

@@ -667,10 +667,12 @@ class Api extends ChangeNotifier {
         null,
       );
   }
-  if (parts.length == 2 && parts[0] == 'leave-requests') {
+  if (parts.length == 2 &&
+      (parts[0] == 'leave-requests' || parts[0] == 'regularisations')) {
     return (method, '/requests/${parts[1]}', body, query);
   }
-  if (parts.length == 3 && parts[0] == 'leave-requests') {
+  if (parts.length == 3 &&
+      (parts[0] == 'leave-requests' || parts[0] == 'regularisations')) {
     final action = parts[2];
     if (action == 'cancel') {
       return ('POST', '/requests/${parts[1]}/cancel', b, null);

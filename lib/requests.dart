@@ -5,7 +5,13 @@ import 'design.dart';
 class RequestsPage extends StatefulWidget {
   final Api api;
   final String mode;
-  const RequestsPage({super.key, required this.api, required this.mode});
+  final String? initialKind;
+  const RequestsPage({
+    super.key,
+    required this.api,
+    required this.mode,
+    this.initialKind,
+  });
   @override
   State<RequestsPage> createState() => _RequestsPageState();
 }
@@ -21,8 +27,24 @@ class _RequestsPageState extends State<RequestsPage> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialKind != null) {
+      kind = widget.initialKind!;
+    }
     if (widget.mode == 'approvals') status = 'Pending';
     load();
+  }
+
+  @override
+  void didUpdateWidget(covariant RequestsPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialKind != null &&
+        widget.initialKind != oldWidget.initialKind &&
+        widget.initialKind != kind) {
+      setState(() {
+        kind = widget.initialKind!;
+      });
+      load();
+    }
   }
 
   @override
@@ -182,13 +204,17 @@ class _RequestsPageState extends State<RequestsPage> {
     } else if (!await confirm(
       context,
       'Approve request?',
-      'Approved leave is counted as used for that leave type.',
+      kind == 'Attendance'
+          ? 'Approved regularisation will update the attendance record.'
+          : 'Approved leave is counted as used for that leave type.',
     )) {
       return;
     }
     try {
+      final endpoint =
+          kind == 'Attendance' ? '/regularisations' : '/leave-requests';
       await widget.api.mutate(
-        '/leave-requests/${request['id']}/${decision == 'Rejected' ? 'reject' : 'approve'}',
+        '$endpoint/${request['id']}/${decision == 'Rejected' ? 'reject' : 'approve'}',
         {'comment': note},
       );
       if (mounted) message(context, 'Request updated.');
@@ -275,13 +301,17 @@ class _RequestsPageState extends State<RequestsPage> {
                           child: InkWell(
                             borderRadius: BorderRadius.circular(24),
                             onTap: () {
-                              kind = item.$1;
+                              setState(() => kind = item.$1);
                               load();
                             },
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 10,
+                                horizontal: 4,
+                              ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
                                     item.$2,
@@ -290,22 +320,26 @@ class _RequestsPageState extends State<RequestsPage> {
                                         ? Colors.white
                                         : const Color(0xFF1B2A4A),
                                   ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    item.$1,
-                                    style: TextStyle(
-                                      color: kind == item.$1
-                                          ? Colors.white
-                                          : const Color(0xFF1B2A4A),
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 14,
+                                  const SizedBox(width: 5),
+                                  Flexible(
+                                    child: Text(
+                                      item.$1,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: kind == item.$1
+                                            ? Colors.white
+                                            : const Color(0xFF1B2A4A),
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 13,
+                                      ),
                                     ),
                                   ),
                                   if (kind == item.$1 && !loading) ...[
-                                    const SizedBox(width: 6),
+                                    const SizedBox(width: 4),
                                     Container(
                                       padding: const EdgeInsets.symmetric(
-                                        horizontal: 6,
+                                        horizontal: 5,
                                         vertical: 1,
                                       ),
                                       decoration: BoxDecoration(
@@ -317,7 +351,7 @@ class _RequestsPageState extends State<RequestsPage> {
                                         style: const TextStyle(
                                           color: primary,
                                           fontWeight: FontWeight.w800,
-                                          fontSize: 12,
+                                          fontSize: 11,
                                         ),
                                       ),
                                     ),

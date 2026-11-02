@@ -91,9 +91,6 @@ void main() {
       expect(find.text(marker.toUpperCase()), findsOneWidget);
       expect(find.text('My day'), findsOneWidget);
       expect(tester.takeException(), isNull);
-      await tester.tap(find.text('Today').first);
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull);
       api.dispose();
     });
   }
