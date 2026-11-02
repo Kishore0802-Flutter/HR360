@@ -36,6 +36,58 @@ class _Tab {
   const _Tab(this.label, this.icon, this.selected, this.page);
 }
 
+class _BottomNavItem extends StatelessWidget {
+  final String label;
+  final IconData icon, selectedIcon;
+  final bool isSelected;
+
+  const _BottomNavItem({
+    required this.label,
+    required this.icon,
+    required this.selectedIcon,
+    required this.isSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const navColor = Color(0xFF0D2554);
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const SizedBox(height: 8),
+        Icon(
+          isSelected ? selectedIcon : icon,
+          size: 24,
+          color: navColor,
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 11.5,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            color: navColor,
+          ),
+        ),
+        const SizedBox(height: 3),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          width: isSelected ? 34 : 0,
+          height: 3.5,
+          decoration: BoxDecoration(
+            color: isSelected ? navColor : Colors.transparent,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _ShellState extends State<Shell> {
   int index = 0;
   int taskIndex = 0;
@@ -99,16 +151,21 @@ class _ShellState extends State<Shell> {
       ),
       _Tab(
         'Attendance',
-        Icons.calendar_month_outlined,
-        Icons.calendar_month_rounded,
+        Icons.schedule_outlined,
+        Icons.schedule_rounded,
         AttendancePage(api: api),
       ),
-      _Tab('Leave', Icons.spa_outlined, Icons.spa_rounded, LeavePage(api: api)),
+      _Tab(
+        'Leave',
+        Icons.near_me_outlined,
+        Icons.near_me_rounded,
+        LeavePage(api: api),
+      ),
       if (api.manager)
         _Tab(
           'Approvals',
-          Icons.verified_user_outlined,
-          Icons.verified_user_rounded,
+          Icons.gpp_good_outlined,
+          Icons.gpp_good_rounded,
           RequestsPage(
             key: ValueKey('approvals_$approvalsKind'),
             api: api,
@@ -118,7 +175,7 @@ class _ShellState extends State<Shell> {
         ),
       _Tab(
         'Profile',
-        Icons.person_outline,
+        Icons.person_outline_rounded,
         Icons.person_rounded,
         ProfilePage(api: api),
       ),
@@ -177,8 +234,6 @@ class _ShellState extends State<Shell> {
     final tasks = module == AppModule.tasks && api.hasTasks;
     final tabs = tasks ? taskTabs : hrmsTabs;
     final selected = (tasks ? taskIndex : index).clamp(0, tabs.length - 1);
-    final accent = tasks ? AppModule.tasks.accent : const Color(0xFF1B8F6E);
-    final soft = tasks ? AppModule.tasks.soft : const Color(0xFFDFF6EA);
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -208,10 +263,11 @@ class _ShellState extends State<Shell> {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: Material(
+              key: const ValueKey('bottom_nav'),
               color: Colors.white,
-              elevation: 10,
-              shadowColor: const Color(0x1A1B3A4B),
-              borderRadius: BorderRadius.circular(28),
+              elevation: 8,
+              shadowColor: const Color(0x1A0D2554),
+              borderRadius: BorderRadius.circular(32),
               clipBehavior: Clip.antiAlias,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -228,65 +284,32 @@ class _ShellState extends State<Shell> {
                         ),
                       ),
                     ),
-                  NavigationBarTheme(
-                    data: NavigationBarThemeData(
-                      height: 64,
-                      backgroundColor: Colors.white,
-                      indicatorColor: soft,
-                      labelTextStyle: WidgetStateProperty.resolveWith((states) {
-                        final on = states.contains(WidgetState.selected);
-                        return TextStyle(
-                          fontSize: 11,
-                          fontWeight: on ? FontWeight.w700 : FontWeight.w600,
-                          color: on ? accent : const Color(0xFF8B93A7),
-                        );
-                      }),
-                      iconTheme: WidgetStateProperty.resolveWith((states) {
-                        final on = states.contains(WidgetState.selected);
-                        return IconThemeData(
-                          size: 22,
-                          color: on ? accent : const Color(0xFF8B93A7),
-                        );
-                      }),
-                    ),
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 320),
-                      transitionBuilder: (child, animation) => FadeTransition(
-                        opacity: animation,
-                        child: SlideTransition(
-                          position: Tween(
-                            begin: const Offset(0, 0.35),
-                            end: Offset.zero,
-                          ).animate(animation),
-                          child: child,
-                        ),
-                      ),
-                      child: NavigationBar(
-                        key: ValueKey(tasks),
-                        selectedIndex: selected,
-                        onDestinationSelected: (i) => setState(() {
-                          if (tasks) {
-                            taskIndex = i;
-                          } else {
-                            index = i;
-                          }
-                        }),
-                        height: 64,
-                        elevation: 0,
-                        backgroundColor: Colors.white,
-                        surfaceTintColor: Colors.white,
-                        indicatorColor: soft,
-                        labelBehavior:
-                            NavigationDestinationLabelBehavior.alwaysShow,
-                        destinations: [
-                          for (final tab in tabs)
-                            NavigationDestination(
-                              icon: Icon(tab.icon),
-                              selectedIcon: Icon(tab.selected),
-                              label: tab.label,
+                  Container(
+                    height: 68,
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: Row(
+                      children: [
+                        for (int i = 0; i < tabs.length; i++)
+                          Expanded(
+                            child: InkWell(
+                              splashColor: Colors.transparent,
+                              highlightColor: Colors.transparent,
+                              onTap: () => setState(() {
+                                if (tasks) {
+                                  taskIndex = i;
+                                } else {
+                                  index = i;
+                                }
+                              }),
+                              child: _BottomNavItem(
+                                label: tabs[i].label,
+                                icon: tabs[i].icon,
+                                selectedIcon: tabs[i].selected,
+                                isSelected: selected == i,
+                              ),
                             ),
-                        ],
-                      ),
+                          ),
+                      ],
                     ),
                   ),
                 ],
@@ -1299,20 +1322,20 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             'OPERATIONS',
             style: TextStyle(
               fontSize: 10.5,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               letterSpacing: 0.8,
               color: Color(0xFF94A3B8),
             ),
           ),
-          const SizedBox(height: 6),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _adminQuickChip(
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _adminGridActionCard(
+                  title: 'Outlet Tasks',
                   icon: Icons.playlist_add_check_rounded,
-                  label: 'Outlet Tasks',
-                  color: const Color(0xFFD97706),
+                  iconColor: const Color(0xFFD97706),
+                  bgColor: const Color(0xFFFEF3C7),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -1325,11 +1348,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     );
                   },
                 ),
-                const SizedBox(width: 8),
-                _adminQuickChip(
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _adminGridActionCard(
+                  title: 'Outlets',
                   icon: Icons.storefront_outlined,
-                  label: 'Outlets',
-                  color: const Color(0xFF0F766E),
+                  iconColor: const Color(0xFF0F766E),
+                  bgColor: const Color(0xFFCCFBF1),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -1342,11 +1368,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     );
                   },
                 ),
-                const SizedBox(width: 8),
-                _adminQuickChip(
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _adminGridActionCard(
+                  title: 'Issues',
                   icon: Icons.warning_amber_rounded,
-                  label: 'Issues',
-                  color: const Color(0xFFDC2626),
+                  iconColor: const Color(0xFFDC2626),
+                  bgColor: const Color(0xFFFEE2E2),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -1356,11 +1385,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     );
                   },
                 ),
-                const SizedBox(width: 8),
-                _adminQuickChip(
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _adminGridActionCard(
+                  title: 'Calendar',
                   icon: Icons.calendar_month_outlined,
-                  label: 'Calendar',
-                  color: const Color(0xFF2563EB),
+                  iconColor: const Color(0xFF2563EB),
+                  bgColor: const Color(0xFFDBEAFE),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -1370,28 +1402,30 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     );
                   },
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
+          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          const SizedBox(height: 12),
           const Text(
             'ADMINISTRATION',
             style: TextStyle(
               fontSize: 10.5,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               letterSpacing: 0.8,
               color: Color(0xFF94A3B8),
             ),
           ),
-          const SizedBox(height: 6),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _adminQuickChip(
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _adminGridActionCard(
+                  title: 'Categories & Templates',
                   icon: Icons.local_offer_outlined,
-                  label: 'Categories & Templates',
-                  color: const Color(0xFF7C3AED),
+                  iconColor: const Color(0xFF7C3AED),
+                  bgColor: const Color(0xFFEDE9FE),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -1401,11 +1435,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     );
                   },
                 ),
-                const SizedBox(width: 8),
-                _adminQuickChip(
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _adminGridActionCard(
+                  title: 'Scheduled Tasks',
                   icon: Icons.repeat_rounded,
-                  label: 'Scheduled Tasks',
-                  color: const Color(0xFFBE5E38),
+                  iconColor: const Color(0xFFBE5E38),
+                  bgColor: const Color(0xFFFCE9DA),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -1415,11 +1452,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     );
                   },
                 ),
-                const SizedBox(width: 8),
-                _adminQuickChip(
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _adminGridActionCard(
+                  title: 'Projects',
                   icon: Icons.folder_outlined,
-                  label: 'Projects',
-                  color: const Color(0xFF059669),
+                  iconColor: const Color(0xFF059669),
+                  bgColor: const Color(0xFFD1FAE5),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -1429,43 +1469,54 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     );
                   },
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _adminQuickChip({
+  Widget _adminGridActionCard({
+    required String title,
     required IconData icon,
-    required String label,
-    required Color color,
+    required Color iconColor,
+    required Color bgColor,
     required VoidCallback onTap,
   }) {
     return Material(
-      color: const Color(0xFFF8FAFC),
-      borderRadius: BorderRadius.circular(10),
+      color: bgColor,
+      borderRadius: BorderRadius.circular(14),
       child: InkWell(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(14),
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-          ),
-          child: Row(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          constraints: const BoxConstraints(minHeight: 82),
+          child: Column(
             mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 16, color: color),
-              const SizedBox(width: 6),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.88),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 18, color: iconColor),
+              ),
+              const SizedBox(height: 6),
               Text(
-                label,
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF1B2A4A),
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1E293B),
+                  height: 1.15,
                 ),
               ),
             ],

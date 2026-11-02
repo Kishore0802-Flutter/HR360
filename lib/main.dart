@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:timezone/data/latest.dart' as tz;
@@ -53,9 +54,50 @@ class _HrAppState extends State<HrApp> {
     routerConfig: router,
     builder: (context, child) => MediaQuery(
       data: MediaQuery.of(context).copyWith(
-        textScaler: MediaQuery.textScalerOf(context).clamp(maxScaleFactor: 1.6),
+        textScaler: ReduceFontSizeTextScaler(
+          MediaQuery.textScalerOf(context).clamp(maxScaleFactor: 1.6),
+          delta: 1.0,
+        ),
       ),
       child: child ?? const SizedBox.shrink(),
     ),
   );
+}
+
+class ReduceFontSizeTextScaler extends TextScaler {
+  final TextScaler parent;
+  final double delta;
+  const ReduceFontSizeTextScaler(this.parent, {this.delta = 1.0});
+
+  @override
+  // ignore: deprecated_member_use, deprecated_member_use_from_same_package
+  double get textScaleFactor => parent.textScaleFactor;
+
+  @override
+  double scale(double fontSize) {
+    final scaled = parent.scale(fontSize);
+    return math.max(6.0, scaled - delta);
+  }
+
+  @override
+  TextScaler clamp({
+    double minScaleFactor = 0.0,
+    double maxScaleFactor = double.infinity,
+  }) {
+    return ReduceFontSizeTextScaler(
+      parent.clamp(minScaleFactor: minScaleFactor, maxScaleFactor: maxScaleFactor),
+      delta: delta,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ReduceFontSizeTextScaler &&
+          runtimeType == other.runtimeType &&
+          parent == other.parent &&
+          delta == other.delta;
+
+  @override
+  int get hashCode => Object.hash(parent, delta);
 }

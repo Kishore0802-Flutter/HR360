@@ -93,6 +93,7 @@ class _TaskDashboardState extends State<TaskDashboard> {
   }
 
   Future<void> load() async {
+    _notifyFiltersChanged();
     setState(() {
       loading = data == null;
       error = null;
@@ -198,6 +199,7 @@ class _TaskDashboardState extends State<TaskDashboard> {
       customFrom = null;
       customTo = null;
     });
+    _notifyFiltersChanged();
     load();
   }
 
@@ -209,6 +211,24 @@ class _TaskDashboardState extends State<TaskDashboard> {
       selectedPriority != null ||
       selectedTaskType != null ||
       (customFrom != null && customTo != null);
+
+  int get _activeFilterCount {
+    int count = 0;
+    if (customFrom != null && customTo != null) count++;
+    if (selectedProjectId != null) count++;
+    if (selectedTeamId != null) count++;
+    if (selectedAssigneeId != null) count++;
+    if (selectedStatus != null) count++;
+    if (selectedPriority != null) count++;
+    if (selectedTaskType != null) count++;
+    return count;
+  }
+
+  void Function(void Function())? _sheetSetState;
+
+  void _notifyFiltersChanged() {
+    _sheetSetState?.call(() {});
+  }
 
   String? get _selectedProjectName {
     if (selectedProjectId == null) return null;
@@ -278,7 +298,7 @@ class _TaskDashboardState extends State<TaskDashboard> {
             ],
 
             // ── Filters Section ─────────────────────────────────────────
-            _buildFilterCard(context, from, to),
+            _buildFilterTriggerBar(context, from, to),
             const SizedBox(height: 16),
 
             // ── 10 Stat Cards Grid ──────────────────────────────────────
@@ -305,7 +325,7 @@ class _TaskDashboardState extends State<TaskDashboard> {
                     style: TextStyle(
                       color: _ink,
                       fontSize: 24,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                       letterSpacing: -0.4,
                     ),
                   ),
@@ -321,6 +341,23 @@ class _TaskDashboardState extends State<TaskDashboard> {
                 ],
               ),
             ),
+            IconButton(
+              tooltip: 'Filters',
+              onPressed: () => _openFiltersBottomSheet(context, from, to),
+              icon: Badge(
+                isLabelVisible: _hasActiveFilters,
+                smallSize: 8,
+                backgroundColor: _taskBrown,
+                child: const Icon(Icons.tune_rounded, color: _ink, size: 21),
+              ),
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.white,
+                side: const BorderSide(color: Color(0xFFD0D7DE)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.all(9),
+              ),
+            ),
+            const SizedBox(width: 8),
             GestureDetector(
               onTap: () => widget.onTab(widget.profileTab),
               child: CircleAvatar(
@@ -330,7 +367,7 @@ class _TaskDashboardState extends State<TaskDashboard> {
                   _userInitials(api.profile?['name']?.toString() ?? ''),
                   style: const TextStyle(
                     color: _taskBrown,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     fontSize: 13,
                   ),
                 ),
@@ -458,7 +495,7 @@ class _TaskDashboardState extends State<TaskDashboard> {
                       style: TextStyle(
                         color: _ink,
                         fontSize: 15,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     SizedBox(height: 2),
@@ -482,7 +519,7 @@ class _TaskDashboardState extends State<TaskDashboard> {
                   'Admin',
                   style: TextStyle(
                     color: _taskBrown,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     fontSize: 11,
                   ),
                 ),
@@ -496,21 +533,20 @@ class _TaskDashboardState extends State<TaskDashboard> {
             'OPERATIONS',
             style: TextStyle(
               fontSize: 10.5,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               letterSpacing: 0.8,
               color: Color(0xFF94A3B8),
             ),
           ),
           const SizedBox(height: 8),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _adminQuickChip(
+          Row(
+            children: [
+              Expanded(
+                child: _adminGridActionCard(
+                  title: 'Outlet Tasks',
                   icon: Icons.playlist_add_check_rounded,
-                  label: 'Outlet Tasks',
-                  color: const Color(0xFFD97706),
-                  iconBg: const Color(0xFFFEF3C7),
+                  iconColor: const Color(0xFFD97706),
+                  bgColor: const Color(0xFFFEF3C7),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -520,20 +556,24 @@ class _TaskDashboardState extends State<TaskDashboard> {
                     );
                   },
                 ),
-                const SizedBox(width: 8),
-                _adminQuickChip(
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _adminGridActionCard(
+                  title: 'Outlets',
                   icon: Icons.storefront_outlined,
-                  label: 'Outlets',
-                  color: const Color(0xFF0F766E),
-                  iconBg: const Color(0xFFCCFBF1),
+                  iconColor: const Color(0xFF0F766E),
+                  bgColor: const Color(0xFFCCFBF1),
                   onTap: () => _showOutletsSheet(context),
                 ),
-                const SizedBox(width: 8),
-                _adminQuickChip(
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _adminGridActionCard(
+                  title: 'Issues',
                   icon: Icons.warning_amber_rounded,
-                  label: 'Issues',
-                  color: const Color(0xFFDC2626),
-                  iconBg: const Color(0xFFFEE2E2),
+                  iconColor: const Color(0xFFDC2626),
+                  bgColor: const Color(0xFFFEE2E2),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -543,12 +583,14 @@ class _TaskDashboardState extends State<TaskDashboard> {
                     );
                   },
                 ),
-                const SizedBox(width: 8),
-                _adminQuickChip(
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _adminGridActionCard(
+                  title: 'Calendar',
                   icon: Icons.calendar_month_outlined,
-                  label: 'Calendar',
-                  color: const Color(0xFF2563EB),
-                  iconBg: const Color(0xFFDBEAFE),
+                  iconColor: const Color(0xFF2563EB),
+                  bgColor: const Color(0xFFDBEAFE),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -558,10 +600,10 @@ class _TaskDashboardState extends State<TaskDashboard> {
                     );
                   },
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           const Divider(height: 1, color: Color(0xFFF1F5F9)),
           const SizedBox(height: 12),
 
@@ -570,29 +612,30 @@ class _TaskDashboardState extends State<TaskDashboard> {
             'ADMINISTRATION',
             style: TextStyle(
               fontSize: 10.5,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               letterSpacing: 0.8,
               color: Color(0xFF94A3B8),
             ),
           ),
           const SizedBox(height: 8),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _adminQuickChip(
+          Row(
+            children: [
+              Expanded(
+                child: _adminGridActionCard(
+                  title: 'Categories & Templates',
                   icon: Icons.local_offer_outlined,
-                  label: 'Categories & Templates',
-                  color: const Color(0xFF7C3AED),
-                  iconBg: const Color(0xFFEDE9FE),
+                  iconColor: const Color(0xFF7C3AED),
+                  bgColor: const Color(0xFFEDE9FE),
                   onTap: () => _showCategoriesAndTemplatesSheet(context),
                 ),
-                const SizedBox(width: 8),
-                _adminQuickChip(
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _adminGridActionCard(
+                  title: 'Scheduled Tasks',
                   icon: Icons.repeat_rounded,
-                  label: 'Scheduled Tasks',
-                  color: _taskBrown,
-                  iconBg: const Color(0xFFFCE9DA),
+                  iconColor: _taskBrown,
+                  bgColor: const Color(0xFFFCE9DA),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -602,12 +645,14 @@ class _TaskDashboardState extends State<TaskDashboard> {
                     );
                   },
                 ),
-                const SizedBox(width: 8),
-                _adminQuickChip(
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _adminGridActionCard(
+                  title: 'Projects',
                   icon: Icons.folder_outlined,
-                  label: 'Projects',
-                  color: const Color(0xFF059669),
-                  iconBg: const Color(0xFFD1FAE5),
+                  iconColor: const Color(0xFF059669),
+                  bgColor: const Color(0xFFD1FAE5),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -617,52 +662,54 @@ class _TaskDashboardState extends State<TaskDashboard> {
                     );
                   },
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _adminQuickChip({
+  Widget _adminGridActionCard({
+    required String title,
     required IconData icon,
-    required String label,
-    required Color color,
-    required Color iconBg,
+    required Color iconColor,
+    required Color bgColor,
     required VoidCallback onTap,
   }) {
     return Material(
-      color: const Color(0xFFF8FAFC),
-      borderRadius: BorderRadius.circular(12),
+      color: bgColor,
+      borderRadius: BorderRadius.circular(14),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-          ),
-          child: Row(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          constraints: const BoxConstraints(minHeight: 82),
+          child: Column(
             mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 26,
-                height: 26,
+                width: 32,
+                height: 32,
                 decoration: BoxDecoration(
-                  color: iconBg,
-                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.white.withValues(alpha: 0.88),
+                  shape: BoxShape.circle,
                 ),
-                child: Icon(icon, size: 15, color: color),
+                child: Icon(icon, size: 18, color: iconColor),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(height: 6),
               Text(
-                label,
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
-                  color: _ink,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1E293B),
+                  height: 1.15,
                 ),
               ),
             ],
@@ -1095,16 +1142,13 @@ class _TaskDashboardState extends State<TaskDashboard> {
 
 
 
-  // ── Filters Card ───────────────────────────────────────────────────────
-  Widget _buildFilterCard(BuildContext context, DateTime from, DateTime to) {
-    final dateLabel = customFrom != null && customTo != null
-        ? '${_formatShortDate(customFrom!)} – ${_formatShortDate(customTo!)}'
-        : 'By Date';
-
+  // ── Filters Trigger Bar & Bottom Sheet ─────────────────────────────────
+  Widget _buildFilterTriggerBar(BuildContext context, DateTime from, DateTime to) {
+    final activeCount = _activeFilterCount;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _line),
         boxShadow: const [
           BoxShadow(
@@ -1114,168 +1158,472 @@ class _TaskDashboardState extends State<TaskDashboard> {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top row: Icon + Title/Subtitle + Granularity Selector
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFCE9DA),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.tune_rounded,
-                  color: _taskBrown,
-                  size: 20,
+              InkWell(
+                onTap: () => _openFiltersBottomSheet(context, from, to),
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: activeCount > 0 ? _taskBrown : const Color(0xFFFCE9DA),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.tune_rounded,
+                    color: activeCount > 0 ? Colors.white : _taskBrown,
+                    size: 19,
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Filters',
+              Expanded(
+                child: InkWell(
+                  onTap: () => _openFiltersBottomSheet(context, from, to),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              'Filters',
+                              style: TextStyle(
+                                color: _ink,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            if (activeCount > 0) ...[
+                              const SizedBox(width: 4),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFCE9DA),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  '$activeCount',
+                                  style: const TextStyle(
+                                    color: _taskBrown,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 1),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          activeCount > 0 ? 'Tap to edit filters' : 'Tap to filter tasks',
+                          style: const TextStyle(
+                            color: _soft,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              _buildGrainPill(),
+            ],
+          ),
+          if (_hasActiveFilters) ...[
+            const SizedBox(height: 10),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  ..._buildActiveChipsList(),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: _clearAllFilters,
+                    child: const Text(
+                      'Clear all',
                       style: TextStyle(
-                        color: _ink,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
+                        color: _taskBrown,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Narrow every widget by date, project, team, person, status, priority or type.',
-                      style: TextStyle(
-                        color: _soft,
-                        fontSize: 11.5,
-                        height: 1.3,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildActiveChipsList() {
+    final chips = <Widget>[];
+
+    Widget chip(String label, VoidCallback onRemove) {
+      return Container(
+        margin: const EdgeInsets.only(right: 6),
+        padding: const EdgeInsets.fromLTRB(8, 4, 5, 4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFCE9DA),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFE8D5C4)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                color: _taskBrown,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(width: 4),
+            GestureDetector(
+              onTap: onRemove,
+              child: const Icon(
+                Icons.close_rounded,
+                size: 14,
+                color: _taskBrown,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (customFrom != null && customTo != null) {
+      chips.add(chip('${_formatShortDate(customFrom!)}–${_formatShortDate(customTo!)}', () {
+        setState(() {
+          customFrom = null;
+          customTo = null;
+        });
+        load();
+      }));
+    }
+    if (selectedProjectId != null) {
+      chips.add(chip(_selectedProjectName ?? 'Project', () {
+        setState(() {
+          selectedProjectId = null;
+        });
+        load();
+      }));
+    }
+    if (selectedTeamId != null) {
+      chips.add(chip(_selectedTeamName ?? 'Team', () {
+        setState(() {
+          selectedTeamId = null;
+        });
+        load();
+      }));
+    }
+    if (selectedAssigneeId != null) {
+      chips.add(chip(_selectedAssigneeName ?? 'Assignee', () {
+        setState(() {
+          selectedAssigneeId = null;
+        });
+        load();
+      }));
+    }
+    if (selectedStatus != null) {
+      chips.add(chip(_pretty(selectedStatus!), () {
+        setState(() {
+          selectedStatus = null;
+        });
+        load();
+      }));
+    }
+    if (selectedPriority != null) {
+      chips.add(chip(_pretty(selectedPriority!), () {
+        setState(() {
+          selectedPriority = null;
+        });
+        load();
+      }));
+    }
+    if (selectedTaskType != null) {
+      chips.add(chip(_pretty(selectedTaskType!), () {
+        setState(() {
+          selectedTaskType = null;
+        });
+        load();
+      }));
+    }
+
+    return chips;
+  }
+
+  void _openFiltersBottomSheet(BuildContext context, DateTime from, DateTime to) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            _sheetSetState = setSheetState;
+            final dateLabel = customFrom != null && customTo != null
+                ? '${_formatShortDate(customFrom!)} – ${_formatShortDate(customTo!)}'
+                : 'By Date';
+
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              padding: EdgeInsets.fromLTRB(
+                18,
+                12,
+                18,
+                MediaQuery.of(context).viewInsets.bottom + 24,
+              ),
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.85,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Drag handle
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFCBD5E1),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Top header: Icon + Title/Subtitle + Close button
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFCE9DA),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.tune_rounded,
+                            color: _taskBrown,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Filters',
+                                style: TextStyle(
+                                  color: _ink,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Narrow every widget by date, project, team, person, status, priority or type.',
+                                style: TextStyle(
+                                  color: _soft,
+                                  fontSize: 11.5,
+                                  height: 1.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close_rounded, size: 20, color: _soft),
+                          onPressed: () => Navigator.pop(sheetContext),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Timeframe row with grain selector
+                    Row(
+                      children: [
+                        const Text(
+                          'Timeframe',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: _ink,
+                          ),
+                        ),
+                        const Spacer(),
+                        _buildGrainPill(),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Filter Dropdowns Wrap
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _filterButton(
+                          icon: Icons.calendar_today_outlined,
+                          label: dateLabel,
+                          isActive: customFrom != null,
+                          onTap: () => _pickDateRange(context),
+                        ),
+                        _filterButton(
+                          icon: Icons.folder_outlined,
+                          label: _selectedProjectName ?? 'By Project',
+                          isActive: selectedProjectId != null,
+                          onTap: () => _openProjectSheet(context),
+                        ),
+                        _filterButton(
+                          icon: Icons.groups_outlined,
+                          label: _selectedTeamName ?? 'By Team',
+                          isActive: selectedTeamId != null,
+                          onTap: () => _openTeamSheet(context),
+                        ),
+                        _filterButton(
+                          icon: Icons.person_outline_rounded,
+                          label: _selectedAssigneeName ?? 'By Assignee Name...',
+                          isActive: selectedAssigneeId != null,
+                          onTap: () => _openAssigneeSheet(context),
+                        ),
+                        _filterButton(
+                          icon: Icons.timelapse_rounded,
+                          label: selectedStatus != null ? _pretty(selectedStatus!) : 'By Status',
+                          isActive: selectedStatus != null,
+                          onTap: () => _openStatusSheet(context),
+                        ),
+                        _filterButton(
+                          icon: Icons.flag_outlined,
+                          label: selectedPriority != null ? _pretty(selectedPriority!) : 'By Priority',
+                          isActive: selectedPriority != null,
+                          onTap: () => _openPrioritySheet(context),
+                        ),
+                        _filterButton(
+                          icon: Icons.category_outlined,
+                          label: selectedTaskType != null ? _pretty(selectedTaskType!) : 'By Type',
+                          isActive: selectedTaskType != null,
+                          onTap: () => _openTypeSheet(context),
+                        ),
+                      ],
+                    ),
+
+                    // Active filter row with Clear all button
+                    if (_hasActiveFilters) ...[
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFCE9DA),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Text(
+                              'Filters applied',
+                              style: TextStyle(
+                                color: _taskBrown,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          const Spacer(),
+                          GestureDetector(
+                            onTap: _clearAllFilters,
+                            child: const Text(
+                              'Clear all',
+                              style: TextStyle(
+                                color: _taskBrown,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+
+                    const Divider(height: 24, color: Color(0xFFF1F5F9)),
+
+                    // Disclaimer note
+                    const Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.info_outline_rounded, size: 14, color: _soft),
+                        SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Counts reflect all current tasks matching the filters; the date range applies to the created vs completed trend.',
+                            style: TextStyle(
+                              color: _soft,
+                              fontSize: 11,
+                              height: 1.35,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+
+                    // Apply Filters Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () => Navigator.pop(sheetContext),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: _taskBrown,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Apply Filters',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              // Grain selector (Day | Week | Month)
-              _buildGrainPill(),
-            ],
-          ),
-          const SizedBox(height: 14),
-
-          // Filter Dropdowns
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _filterButton(
-                icon: Icons.calendar_today_outlined,
-                label: dateLabel,
-                isActive: customFrom != null,
-                onTap: () => _pickDateRange(context),
-              ),
-              _filterButton(
-                icon: Icons.folder_outlined,
-                label: _selectedProjectName ?? 'By Project',
-                isActive: selectedProjectId != null,
-                onTap: () => _openProjectSheet(context),
-              ),
-              _filterButton(
-                icon: Icons.groups_outlined,
-                label: _selectedTeamName ?? 'By Team',
-                isActive: selectedTeamId != null,
-                onTap: () => _openTeamSheet(context),
-              ),
-              _filterButton(
-                icon: Icons.person_outline_rounded,
-                label: _selectedAssigneeName ?? 'By Assignee Name...',
-                isActive: selectedAssigneeId != null,
-                onTap: () => _openAssigneeSheet(context),
-              ),
-              _filterButton(
-                icon: Icons.timelapse_rounded,
-                label: selectedStatus != null ? _pretty(selectedStatus!) : 'By Status',
-                isActive: selectedStatus != null,
-                onTap: () => _openStatusSheet(context),
-              ),
-              _filterButton(
-                icon: Icons.flag_outlined,
-                label: selectedPriority != null ? _pretty(selectedPriority!) : 'By Priority',
-                isActive: selectedPriority != null,
-                onTap: () => _openPrioritySheet(context),
-              ),
-              _filterButton(
-                icon: Icons.category_outlined,
-                label: selectedTaskType != null ? _pretty(selectedTaskType!) : 'By Type',
-                isActive: selectedTaskType != null,
-                onTap: () => _openTypeSheet(context),
-              ),
-            ],
-          ),
-
-          // Active filter row with Clear all button
-          if (_hasActiveFilters) ...[
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFCE9DA),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Text(
-                    'Filters applied',
-                    style: TextStyle(
-                      color: _taskBrown,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                GestureDetector(
-                  onTap: _clearAllFilters,
-                  child: const Text(
-                    'Clear all',
-                    style: TextStyle(
-                      color: _taskBrown,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-
-          const Divider(height: 24, color: Color(0xFFF1F5F9)),
-
-          // Disclaimer note
-          const Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.info_outline, size: 14, color: _soft),
-              SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  'Counts reflect all current tasks matching the filters; the date range applies to the created vs completed trend.',
-                  style: TextStyle(
-                    color: _soft,
-                    fontSize: 11,
-                    height: 1.35,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+            );
+          },
+        );
+      },
+    ).whenComplete(() {
+      _sheetSetState = null;
+    });
   }
 
   Widget _buildGrainPill() {

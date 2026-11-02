@@ -801,7 +801,7 @@ class _LoginPageState extends State<LoginPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+                      padding: const EdgeInsets.fromLTRB(24, 15, 24, 0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -810,14 +810,14 @@ class _LoginPageState extends State<LoginPage> {
                             children: [
                               Expanded(
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
                                     SizedBox(
                                       height: 34,
                                       width: double.infinity,
                                       child: Image.asset(
                                         'assets/logo_mark.png',
-                                        alignment: Alignment.centerLeft,
+                                        alignment: Alignment.center,
                                         fit: BoxFit.contain,
                                       ),
                                     ),
@@ -832,57 +832,9 @@ class _LoginPageState extends State<LoginPage> {
                                   ],
                                 ),
                               ),
-                              PopupMenuButton<String>(
-                                initialValue: language,
-                                onSelected: (value) =>
-                                    setState(() => language = value),
-                                itemBuilder: (context) => const [
-                                  PopupMenuItem(
-                                    value: 'EN',
-                                    child: Text('English'),
-                                  ),
-                                ],
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: const Color(0xFFE4E9EF),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(
-                                        Icons.language,
-                                        size: 16,
-                                        color: Color(0xFF5E6B7A),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        language,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 12,
-                                          color: _navy,
-                                        ),
-                                      ),
-                                      const Icon(
-                                        Icons.keyboard_arrow_down_rounded,
-                                        size: 16,
-                                        color: Color(0xFF5E6B7A),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
                             ],
                           ),
-                          const SizedBox(height: 18),
+                          const SizedBox(height: 50),
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -948,22 +900,22 @@ class _LoginPageState extends State<LoginPage> {
                               Icons.mail_outline,
                               suffix: recentEmails.isNotEmpty
                                   ? PopupMenuButton<String>(
-                                      tooltip: 'Stored emails',
+                                      tooltip: 'Stored accounts',
                                       icon: const Icon(
-                                        Icons.arrow_drop_down,
+                                        Icons.arrow_drop_down_rounded,
                                         color: Color(0xFF64748B),
-                                        size: 24,
+                                        size: 28,
                                       ),
                                       position: PopupMenuPosition.under,
-                                      elevation: 4,
+                                      elevation: 6,
                                       color: Colors.white,
                                       surfaceTintColor: Colors.white,
                                       constraints: const BoxConstraints(
-                                        minWidth: 200,
-                                        maxWidth: 320,
+                                        minWidth: 220,
+                                        maxWidth: 340,
                                       ),
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
+                                        borderRadius: BorderRadius.circular(16),
                                         side: const BorderSide(
                                           color: Color(0xFFE2E8F0),
                                         ),
@@ -973,47 +925,79 @@ class _LoginPageState extends State<LoginPage> {
                                           id.text = email;
                                           id.selection =
                                               TextSelection.fromPosition(
-                                            TextPosition(offset: email.length),
-                                          );
+                                                TextPosition(
+                                                  offset: email.length,
+                                                ),
+                                              );
                                         });
                                       },
                                       itemBuilder: (context) => [
-                                        for (final email in recentEmails)
+                                        const PopupMenuItem<String>(
+                                          enabled: false,
+                                          height: 32,
+                                          child: Text(
+                                            'STORED EMAILS',
+                                            style: TextStyle(
+                                              color: Color(0xFF8E99A8),
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w800,
+                                              letterSpacing: 0.8,
+                                            ),
+                                          ),
+                                        ),
+                                        for (final email in recentEmails.take(
+                                          5,
+                                        ))
                                           PopupMenuItem<String>(
                                             value: email,
-                                            height: 40,
+                                            height: 44,
                                             child: Row(
-                                              mainAxisSize: MainAxisSize.min,
                                               children: [
-                                                const Icon(
-                                                  Icons.history,
-                                                  size: 15,
-                                                  color: Color(0xFF64748B),
+                                                Container(
+                                                  width: 28,
+                                                  height: 28,
+                                                  decoration: BoxDecoration(
+                                                    color: const Color(
+                                                      0xFFE7F6EE,
+                                                    ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          8,
+                                                        ),
+                                                  ),
+                                                  child: const Icon(
+                                                    Icons
+                                                        .person_outline_rounded,
+                                                    size: 16,
+                                                    color: _green,
+                                                  ),
                                                 ),
-                                                const SizedBox(width: 8),
-                                                Flexible(
+                                                const SizedBox(width: 10),
+                                                Expanded(
                                                   child: Text(
                                                     email,
                                                     overflow:
                                                         TextOverflow.ellipsis,
                                                     style: TextStyle(
-                                                      fontSize: 13,
-                                                      fontWeight: id.text
+                                                      fontSize: 13.5,
+                                                      fontWeight:
+                                                          id.text
                                                                   .trim()
                                                                   .toLowerCase() ==
                                                               email
                                                                   .toLowerCase()
-                                                          ? FontWeight.w600
-                                                          : FontWeight.w400,
-                                                      color: id.text
+                                                          ? FontWeight.w700
+                                                          : FontWeight.w500,
+                                                      color:
+                                                          id.text
                                                                   .trim()
                                                                   .toLowerCase() ==
                                                               email
                                                                   .toLowerCase()
-                                                          ? const Color(
-                                                              0xFFBA4728)
+                                                          ? _green
                                                           : const Color(
-                                                              0xFF1E293B),
+                                                              0xFF1B2A4A,
+                                                            ),
                                                     ),
                                                   ),
                                                 ),
@@ -1023,9 +1007,9 @@ class _LoginPageState extends State<LoginPage> {
                                                     email.toLowerCase()) ...[
                                                   const SizedBox(width: 8),
                                                   const Icon(
-                                                    Icons.check,
-                                                    size: 15,
-                                                    color: Color(0xFFBA4728),
+                                                    Icons.check_rounded,
+                                                    size: 17,
+                                                    color: _green,
                                                   ),
                                                 ],
                                               ],
@@ -1149,70 +1133,6 @@ class _LoginPageState extends State<LoginPage> {
                                     ],
                                   ),
                           ),
-                          const SizedBox(height: 16),
-                          const Row(
-                            children: [
-                              Expanded(
-                                child: Divider(color: Color(0xFFE6EBEF)),
-                              ),
-                              Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 12),
-                                child: Text(
-                                  'OR',
-                                  style: TextStyle(
-                                    color: Color(0xFFB0B8C4),
-                                    fontSize: 12,
-                                    letterSpacing: 1,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: Divider(color: Color(0xFFE6EBEF)),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size(double.infinity, 52),
-                              foregroundColor: _navy,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                              ),
-                              side: const BorderSide(color: Color(0xFFE3E8EE)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(28),
-                              ),
-                            ),
-                            onPressed: busy
-                                ? null
-                                : () => comingSoon(
-                                    context,
-                                    'Sign in with Biometrics',
-                                    'Fingerprint and face sign-in will be available soon. Use your email and password for now.',
-                                  ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.fingerprint,
-                                  color: _green,
-                                  size: 22,
-                                ),
-                                SizedBox(width: 8),
-                                Flexible(
-                                  child: Text(
-                                    'Sign in with Biometrics',
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
                         ],
                       ),
                     ),
@@ -1239,29 +1159,29 @@ class _LoginFooter extends StatelessWidget {
     child: Stack(
       children: [
         const Positioned.fill(child: CustomPaint(painter: _FooterPainter())),
-        Positioned(
-          top: 8,
-          left: 24,
-          right: 24,
-          child: Column(
-            children: [
-              const Icon(
-                Icons.gpp_good_outlined,
-                color: Color(0xFF1E6B56),
-                size: 28,
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Your data is secure',
-                style: TextStyle(
-                  color: Color(0xFF7C8794),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
+        // Positioned(
+        //   top: 8,
+        //   left: 24,
+        //   right: 24,
+        //   child: Column(
+        //     children: [
+        //       const Icon(
+        //         Icons.gpp_good_outlined,
+        //         color: Color(0xFF1E6B56),
+        //         size: 28,
+        //       ),
+        //       const SizedBox(height: 10),
+        //       const Text(
+        //         'Your data is secure',
+        //         style: TextStyle(
+        //           color: Color(0xFF7C8794),
+        //           fontSize: 14,
+        //           fontWeight: FontWeight.w500,
+        //         ),
+        //       ),
+        //     ],
+        //   ),
+        // ),
       ],
     ),
   );

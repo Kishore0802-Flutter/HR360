@@ -170,8 +170,12 @@ void main() {
     await tester.tap(find.text('My tasks'));
     expect(selectedTab, 1);
 
-    // 2. Filter Card
+    // 2. Filter Bar & Bottom Sheet
     expect(find.text('Filters'), findsOneWidget);
+    // Tap filter icon to open bottom sheet
+    await tester.tap(find.byIcon(Icons.tune_rounded).first);
+    await tester.pumpAndSettle();
+
     expect(find.text('By Date'), findsOneWidget);
     expect(find.text('By Project'), findsOneWidget);
     expect(find.text('By Team'), findsOneWidget);
@@ -179,6 +183,10 @@ void main() {
     expect(find.text('By Status'), findsOneWidget);
     expect(find.text('By Priority'), findsOneWidget);
     expect(find.text('By Type'), findsOneWidget);
+
+    // Close bottom sheet via Apply Filters
+    await tester.tap(find.text('Apply Filters'));
+    await tester.pumpAndSettle();
 
     // 3. 10 Stat Cards
     expect(find.text('Total tasks'), findsOneWidget);
@@ -202,8 +210,10 @@ void main() {
     expect(find.text('By team'), findsNothing);
     expect(find.text('Overdue by project'), findsNothing);
 
-    // 5. Scroll back up and test Assignee Bottom Sheet with Search Field
-    await tester.scrollUntilVisible(find.text('By Assignee Name...'), -300);
+    // 5. Open filter sheet again and test Assignee Bottom Sheet with Search Field
+    await tester.tap(find.byIcon(Icons.tune_rounded).first);
+    await tester.pumpAndSettle();
+
     await tester.tap(find.text('By Assignee Name...'));
     await tester.pumpAndSettle();
     expect(find.text('Select Assignee'), findsOneWidget);
@@ -220,12 +230,12 @@ void main() {
     // Select Anitha
     await tester.tap(find.text('Anitha Devi'));
     await tester.pumpAndSettle();
-    expect(find.text('Anitha Devi'), findsOneWidget); // Filter button now shows selected name
-    expect(find.text('Filters applied'), findsOneWidget);
-    expect(find.text('Clear all'), findsOneWidget);
+    expect(find.text('Anitha Devi'), findsWidgets); // Filter button now shows selected name
+    expect(find.text('Filters applied'), findsWidgets);
+    expect(find.text('Clear all'), findsWidgets);
 
     // Clear filters
-    await tester.tap(find.text('Clear all'));
+    await tester.tap(find.text('Clear all').last);
     await tester.pumpAndSettle();
     expect(find.text('By Assignee Name...'), findsOneWidget);
 

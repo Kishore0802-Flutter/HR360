@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'network/dio_client.dart';
 import 'network/live_gateway.dart';
 import 'offline.dart' as device;
@@ -246,41 +247,82 @@ class Api extends ChangeNotifier {
   }
 
   Future<List<String>> getRecentEmails() async {
-    final raw = await storage.read(key: 'recent_emails');
-    if (raw != null && raw.isNotEmpty) {
-      try {
-        final decoded = jsonDecode(raw);
-        if (decoded is List) {
-          final list = decoded
-              .map((e) => e?.toString().trim() ?? '')
-              .where((e) => e.isNotEmpty)
-              .toList();
-          if (list.isNotEmpty) return list;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final list = prefs.getStringList('recent_emails');
+      if (list != null && list.isNotEmpty) {
+        final clean = <String>[];
+        for (final item in list) {
+          final trimmed = item.trim();
+          if (trimmed.isNotEmpty &&
+              !clean.any((e) => e.toLowerCase() == trimmed.toLowerCase())) {
+            clean.add(trimmed);
+          }
         }
-      } catch (_) {}
-    }
-    final last = await storage.read(key: 'last_id');
-    if (last != null && last.trim().isNotEmpty) {
-      return [last.trim()];
-    }
+        if (clean.isNotEmpty) {
+          if (clean.length > 5) clean.removeRange(5, clean.length);
+          return clean;
+        }
+      }
+      final lastPref = prefs.getString('last_id');
+      if (lastPref != null && lastPref.trim().isNotEmpty) {
+        return [lastPref.trim()];
+      }
+    } catch (_) {}
+
+    try {
+      final raw = await storage.read(key: 'recent_emails');
+      if (raw != null && raw.isNotEmpty) {
+        try {
+          final decoded = jsonDecode(raw);
+          if (decoded is List) {
+            final clean = <String>[];
+            for (final item in decoded) {
+              final trimmed = item?.toString().trim() ?? '';
+              if (trimmed.isNotEmpty &&
+                  !clean.any((e) => e.toLowerCase() == trimmed.toLowerCase())) {
+                clean.add(trimmed);
+              }
+            }
+            if (clean.isNotEmpty) {
+              if (clean.length > 5) clean.removeRange(5, clean.length);
+              return clean;
+            }
+          }
+        } catch (_) {}
+      }
+      final last = await storage.read(key: 'last_id');
+      if (last != null && last.trim().isNotEmpty) {
+        return [last.trim()];
+      }
+    } catch (_) {}
     return const [];
   }
 
   Future<void> saveRecentEmail(String email) async {
     final clean = email.trim();
     if (clean.isEmpty) return;
-    final current = await getRecentEmails();
-    final updated = <String>[clean];
-    for (final item in current) {
-      if (item.toLowerCase() != clean.toLowerCase()) {
-        updated.add(item);
+    try {
+      final current = await getRecentEmails();
+      final updated = <String>[clean];
+      for (final item in current) {
+        if (item.toLowerCase() != clean.toLowerCase()) {
+          updated.add(item);
+        }
       }
-    }
-    if (updated.length > 5) {
-      updated.removeRange(5, updated.length);
-    }
-    await storage.write(key: 'recent_emails', value: jsonEncode(updated));
-    await storage.write(key: 'last_id', value: clean);
+      if (updated.length > 5) {
+        updated.removeRange(5, updated.length);
+      }
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setStringList('recent_emails', updated);
+        await prefs.setString('last_id', clean);
+      } catch (_) {}
+      try {
+        await storage.write(key: 'recent_emails', value: jsonEncode(updated));
+        await storage.write(key: 'last_id', value: clean);
+      } catch (_) {}
+    } catch (_) {}
   }
 
   Future<void> login(String id, String password) async {

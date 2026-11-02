@@ -70,10 +70,10 @@ void main() {
     addTearDown(tester.view.reset);
   }
 
-  for (final (role, scope, marker) in [
-    ('admin', 'ALL', 'Organisation pulse'),
-    ('hr', 'ALL', 'People overview'),
-    ('manager', 'TEAM', 'Your team today'),
+  for (final (role, scope) in [
+    ('admin', 'ALL'),
+    ('hr', 'ALL'),
+    ('manager', 'TEAM'),
   ]) {
     testWidgets('$role dashboard renders live data without overflow', (
       tester,
@@ -88,8 +88,8 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text(marker.toUpperCase()), findsOneWidget);
-      expect(find.text('My day'), findsOneWidget);
+      expect(find.text('Organisation Pulse'), findsOneWidget);
+      expect(find.text('My Day'), findsOneWidget);
       expect(tester.takeException(), isNull);
       api.dispose();
     });

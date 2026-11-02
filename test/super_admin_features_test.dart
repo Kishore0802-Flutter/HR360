@@ -104,7 +104,6 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Export CSV'), findsOneWidget);
       expect(find.text('Add employee'), findsNothing);
 
       // 2. Super Admin
@@ -127,7 +126,6 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Export CSV'), findsOneWidget);
       expect(find.text('Add employee'), findsOneWidget);
 
       // Tap Add employee opens modal

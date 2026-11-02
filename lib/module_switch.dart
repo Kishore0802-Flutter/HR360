@@ -1,24 +1,23 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'design.dart';
 
 enum AppModule { hrms, tasks }
 
 const tasksAccent = Color(0xFFC2570C);
 
 extension AppModuleStyle on AppModule {
-  Color get accent => this == AppModule.hrms ? primary : tasksAccent;
+  Color get accent => this == AppModule.hrms ? const Color(0xFF0C3831) : tasksAccent;
   Color get soft => this == AppModule.hrms
-      ? const Color(0xFFDFF6EA)
+      ? const Color(0xFFE2E8F0)
       : const Color(0xFFFCE9DA);
   List<Color> get gradient => this == AppModule.hrms
-      ? const [Color(0xFF1B7F56), Color(0xFF34A97C)]
+      ? const [Color(0xFF0C3831), Color(0xFF0F473E)]
       : const [Color(0xFFC2570C), Color(0xFFEB8A3C)];
   String get title => this == AppModule.hrms ? 'HRMS' : 'Tasks';
   String get subtitle =>
-      this == AppModule.hrms ? 'People & attendance' : 'Work & issues';
+      this == AppModule.hrms ? 'People & Attendance' : 'Work & Issues';
   IconData get icon =>
-      this == AppModule.hrms ? Icons.groups_2_outlined : Icons.task_alt_rounded;
+      this == AppModule.hrms ? Icons.groups_rounded : Icons.check_box_outlined;
 }
 
 /// Full-width workspace dock: two halves with a sliding gradient thumb.
@@ -35,33 +34,33 @@ class ModuleSwitch extends StatelessWidget {
   Widget build(BuildContext context) {
     final tasks = module == AppModule.tasks;
     return Container(
-      height: 64,
-      padding: const EdgeInsets.all(5),
+      height: 58,
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE9EDF1)),
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0F1B2A4A),
-            blurRadius: 18,
-            offset: Offset(0, 6),
+            color: Color(0x0A1B2A4A),
+            blurRadius: 14,
+            offset: Offset(0, 4),
           ),
         ],
       ),
       child: Stack(
         children: [
           AnimatedAlign(
-            duration: const Duration(milliseconds: 420),
-            curve: Curves.easeOutBack,
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeOutCubic,
             alignment: tasks ? Alignment.centerRight : Alignment.centerLeft,
             child: FractionallySizedBox(
               widthFactor: 0.5,
               heightFactor: 1,
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 420),
+                duration: const Duration(milliseconds: 350),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(17),
+                  borderRadius: BorderRadius.circular(22),
                   gradient: LinearGradient(
                     colors: module.gradient,
                     begin: Alignment.topLeft,
@@ -69,9 +68,9 @@ class ModuleSwitch extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: module.accent.withValues(alpha: 0.32),
-                      blurRadius: 14,
-                      offset: const Offset(0, 6),
+                      color: module.accent.withValues(alpha: 0.28),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
@@ -110,39 +109,28 @@ class _Half extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fg = selected ? Colors.white : ink;
+    final fg = selected ? Colors.white : const Color(0xFF0F172A);
     return Semantics(
       button: true,
       selected: selected,
       label: '${module.title} workspace',
       child: InkWell(
-        borderRadius: BorderRadius.circular(17),
+        borderRadius: BorderRadius.circular(22),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Row(
             children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: selected
-                      ? Colors.white.withValues(alpha: 0.22)
-                      : module.soft,
-                ),
-                child: Icon(
-                  module.icon,
-                  size: 18,
-                  color: selected ? Colors.white : module.accent,
-                ),
+              Icon(
+                module.icon,
+                size: 21,
+                color: selected ? Colors.white : const Color(0xFF0F172A),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 300),
-                  style: TextStyle(color: fg, fontFamily: 'Manrope'),
+                  duration: const Duration(milliseconds: 250),
+                  style: TextStyle(color: fg),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,8 +139,8 @@ class _Half extends StatelessWidget {
                         module.title,
                         maxLines: 1,
                         style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       Text(
@@ -160,11 +148,11 @@ class _Half extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w500,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w400,
                           color: selected
-                              ? Colors.white.withValues(alpha: 0.85)
-                              : muted,
+                              ? Colors.white.withValues(alpha: 0.8)
+                              : const Color(0xFF64748B),
                         ),
                       ),
                     ],

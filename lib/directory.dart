@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'api.dart';
 import 'design.dart';
@@ -32,6 +33,55 @@ class _EmployeesPageState extends State<EmployeesPage> {
 
   final TextEditingController _searchCtrl = TextEditingController();
   String _searchQuery = '';
+  Timer? _debounceTimer;
+
+  void _onSearchChanged(String val) {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      setState(() {
+        _searchQuery = val;
+        _page = 1;
+      });
+      _loadEmployees();
+    });
+  }
+
+  List<Map<String, dynamic>> get _displayEmployees {
+    if (_searchQuery.trim().isEmpty) return _employees;
+    final q = _searchQuery.trim().toLowerCase();
+    return _employees.where((person) {
+      final name = (person['fullName']?.toString() ??
+              '${person['firstName'] ?? ''} ${person['lastName'] ?? ''}')
+          .toLowerCase();
+      final empCode = (person['employeeCode']?.toString() ??
+              person['code']?.toString() ??
+              '')
+          .toLowerCase();
+      final email = (person['email']?.toString() ?? '').toLowerCase();
+      final department = ((person['department'] is Map)
+              ? (person['department']['name']?.toString() ?? '')
+              : (person['department']?.toString() ?? ''))
+          .toLowerCase();
+      final designation = ((person['designation'] is Map)
+              ? (person['designation']['title']?.toString() ??
+                  person['designation']['name']?.toString() ??
+                  '')
+              : (person['designation']?.toString() ?? ''))
+          .toLowerCase();
+      final managerName = ((person['manager'] is Map)
+              ? (person['manager']['fullName']?.toString() ?? '')
+              : (person['manager']?.toString() ?? ''))
+          .toLowerCase();
+
+      return name.contains(q) ||
+          empCode.contains(q) ||
+          email.contains(q) ||
+          department.contains(q) ||
+          designation.contains(q) ||
+          managerName.contains(q);
+    }).toList();
+  }
 
   // Pagination State
   int _page = 1;
@@ -71,6 +121,7 @@ class _EmployeesPageState extends State<EmployeesPage> {
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _searchCtrl.dispose();
     super.dispose();
   }
@@ -131,14 +182,16 @@ class _EmployeesPageState extends State<EmployeesPage> {
     try {
       final queryParams = <String, dynamic>{
         'page': _page,
-        'pageSize': _pageSize,
+        'pageSize': _searchQuery.trim().isNotEmpty ? 100 : _pageSize,
         'sortDir': 'asc',
         'sortBy': 'employeeCode',
       };
 
       if (_searchQuery.trim().isNotEmpty) {
-        queryParams['search'] = _searchQuery.trim();
-        queryParams['q'] = _searchQuery.trim();
+        final q = _searchQuery.trim();
+        queryParams['search'] = q;
+        queryParams['q'] = q;
+        queryParams['keyword'] = q;
       }
       if (_selectedDepartmentId != null) {
         queryParams['departmentId'] = _selectedDepartmentId!;
@@ -216,6 +269,7 @@ class _EmployeesPageState extends State<EmployeesPage> {
   }
 
   void _clearFilters() {
+    _debounceTimer?.cancel();
     setState(() {
       _searchCtrl.clear();
       _searchQuery = '';
@@ -630,28 +684,11 @@ class _EmployeesPageState extends State<EmployeesPage> {
         title: const Text(
           'Employees',
           style: TextStyle(
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
             fontSize: 20,
             color: _ink,
           ),
         ),
-        actions: [
-          if (widget.api.canAddEmployee)
-            IconButton(
-              tooltip: 'Add employee',
-              icon: const Icon(Icons.person_add_alt_1_rounded, color: _taskBrown),
-              onPressed: _openAddEmployeePage,
-            ),
-          IconButton(
-            tooltip: 'Export CSV',
-            icon: const Icon(Icons.file_download_outlined, color: _ink),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Employee list CSV export ready.')),
-              );
-            },
-          ),
-        ],
       ),
       body: RefreshIndicator(
         onRefresh: _loadEmployees,
@@ -681,41 +718,21 @@ class _EmployeesPageState extends State<EmployeesPage> {
                   'Employee directory with employment details, reporting lines and teams.',
                   style: TextStyle(fontSize: 13, color: _soft),
                 ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Employee list CSV export ready.')),
-                        );
-                      },
-                      icon: const Icon(Icons.file_download_outlined, size: 16, color: _ink),
-                      label: const Text('Export CSV', style: TextStyle(color: _ink, fontWeight: FontWeight.w700, fontSize: 13)),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFFCBD5E1)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      ),
+                if (widget.api.canAddEmployee) ...[
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    onPressed: _openAddEmployeePage,
+                    icon: const Icon(Icons.add_rounded, size: 16),
+                    label: const Text('Add employee', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _taskBrown,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
                     ),
-                    if (widget.api.canAddEmployee) ...[
-                      ElevatedButton.icon(
-                        onPressed: _openAddEmployeePage,
-                        icon: const Icon(Icons.add_rounded, size: 16),
-                        label: const Text('Add employee', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _taskBrown,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 16),
@@ -740,14 +757,16 @@ class _EmployeesPageState extends State<EmployeesPage> {
                   // Search Row
                   TextField(
                     controller: _searchCtrl,
+                    onChanged: _onSearchChanged,
                     decoration: InputDecoration(
                       hintText: 'Search name, email, code...',
                       hintStyle: const TextStyle(fontSize: 13.5, color: _soft),
                       prefixIcon: const Icon(Icons.search, size: 18, color: _soft),
-                      suffixIcon: _searchQuery.isNotEmpty
+                      suffixIcon: _searchCtrl.text.isNotEmpty || _searchQuery.isNotEmpty
                           ? IconButton(
                               icon: const Icon(Icons.clear, size: 16),
                               onPressed: () {
+                                _debounceTimer?.cancel();
                                 _searchCtrl.clear();
                                 setState(() {
                                   _searchQuery = '';
@@ -775,6 +794,7 @@ class _EmployeesPageState extends State<EmployeesPage> {
                       ),
                     ),
                     onSubmitted: (val) {
+                      _debounceTimer?.cancel();
                       setState(() {
                         _searchQuery = val;
                         _page = 1;
@@ -932,7 +952,7 @@ class _EmployeesPageState extends State<EmployeesPage> {
                   ),
                 ),
               )
-            else if (_employees.isEmpty)
+            else if (_displayEmployees.isEmpty)
               Center(
                 child: Padding(
                   padding: const EdgeInsets.all(40),
@@ -954,7 +974,7 @@ class _EmployeesPageState extends State<EmployeesPage> {
                 ),
               )
             else ...[
-              for (final emp in _employees) ...[
+              for (final emp in _displayEmployees) ...[
                 _buildEmployeeCard(emp),
                 const SizedBox(height: 10),
               ],

@@ -10,6 +10,7 @@ import 'package:hr360_mobile/design.dart';
 import 'package:hr360_mobile/leave.dart';
 import 'package:hr360_mobile/welcome.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
@@ -46,7 +47,7 @@ void main() {
       await tester.tap(
         find
             .descendant(
-              of: find.byType(NavigationBar),
+              of: find.byKey(const ValueKey('bottom_nav')),
               matching: find.text(tab),
             )
             .last,
@@ -161,12 +162,13 @@ void main() {
     await tester.pump();
     expect(tester.takeException(), isNull);
     expect(find.text('Welcome back!'), findsOneWidget);
-    expect(find.text('Sign in with Biometrics'), findsOneWidget);
+    expect(find.text('Sign in with Biometrics'), findsNothing);
     expect(find.text('Forgot password?'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });
   test('Api stores up to 5 recent login emails without duplicates', () async {
+    SharedPreferences.setMockInitialValues({});
     FlutterSecureStorage.setMockInitialValues({});
     final api = Api(client: MockClient((_) async => http.Response('{}', 200)));
     await api.saveRecentEmail('one@hr360.dev');

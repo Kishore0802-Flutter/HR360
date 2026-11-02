@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'api.dart';
 
 const ink = Color(0xFF25264D),
@@ -17,9 +18,9 @@ ThemeData appTheme() => ThemeData(
     onPrimary: Colors.white,
     surface: paper,
   ),
-  fontFamily: 'Manrope',
-  textTheme: ThemeData.light().textTheme.apply(
-    fontFamily: 'Manrope',
+  fontFamily: GoogleFonts.poppins().fontFamily,
+  textTheme: GoogleFonts.poppinsTextTheme(ThemeData.light().textTheme).apply(
+    fontFamily: GoogleFonts.poppins().fontFamily,
     bodyColor: ink,
     displayColor: ink,
   ),
