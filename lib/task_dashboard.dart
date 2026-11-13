@@ -499,12 +499,16 @@ class _TaskDashboardState extends State<TaskDashboard> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        "Here's your organization overview",
-                        style: GoogleFonts.poppins(
-                          color: const Color(0xFF8B93A7),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                      Expanded(
+                        child: Text(
+                          "Here's your organization overview",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                            color: const Color(0xFF8B93A7),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ],
