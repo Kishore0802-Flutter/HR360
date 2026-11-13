@@ -15,8 +15,6 @@ const _ink = Color(0xFF0F172A);
 const _soft = Color(0xFF64748B);
 const _line = Color(0xFFE2E8F0);
 const _forestDark = Color(0xFF0C3831);
-const _forestDeep = Color(0xFF06231E);
-const _mint = Color(0xFF2EE59D);
 
 enum DashPeriod { today, week, month }
 
@@ -159,14 +157,19 @@ class _RoleDashboardState extends State<RoleDashboard> {
       child: RefreshIndicator(
         onRefresh: load,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 6, 16, 120),
+          padding: EdgeInsets.fromLTRB(
+            responsiveHorizontalPadding(context, mobilePadding: 16),
+            6,
+            responsiveHorizontalPadding(context, mobilePadding: 16),
+            120,
+          ),
           children: [
             _header(),
             if (widget.moduleSwitch != null) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               widget.moduleSwitch!,
             ],
-            const SizedBox(height: 18),
+            const SizedBox(height: 20),
             _OrganisationPulseCard(
               data: d,
               period: period,
@@ -243,12 +246,27 @@ class _RoleDashboardState extends State<RoleDashboard> {
           right: -16,
           child: IgnorePointer(
             child: SizedBox(
-              width: 175,
-              height: 145,
-              child: Image.asset(
-                'assets/dashboard_building.png',
-                fit: BoxFit.contain,
-                alignment: Alignment.topRight,
+              width: 180,
+              height: 140,
+              child: ShaderMask(
+                shaderCallback: (bounds) {
+                  return const LinearGradient(
+                    begin: Alignment.centerRight,
+                    end: Alignment.bottomLeft,
+                    colors: [
+                      Colors.white,
+                      Colors.white,
+                      Colors.transparent,
+                    ],
+                    stops: [0.0, 0.60, 1.0],
+                  ).createShader(bounds);
+                },
+                blendMode: BlendMode.dstIn,
+                child: Image.asset(
+                  'assets/dashboard_building.png',
+                  fit: BoxFit.cover,
+                  alignment: Alignment.topRight,
+                ),
               ),
             ),
           ),
@@ -393,14 +411,14 @@ class _RoleDashboardState extends State<RoleDashboard> {
 
 class _OrganisationPulseCard extends StatelessWidget {
   final Json data;
-  final DashPeriod period;
-  final ValueChanged<DashPeriod> onPeriodChanged;
+  final DashPeriod? period;
+  final ValueChanged<DashPeriod>? onPeriodChanged;
   final VoidCallback? onPendingLeavesTap;
 
   const _OrganisationPulseCard({
     required this.data,
-    required this.period,
-    required this.onPeriodChanged,
+    this.period,
+    this.onPeriodChanged,
     this.onPendingLeavesTap,
   });
 
@@ -408,7 +426,6 @@ class _OrganisationPulseCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final today = _map(data['attendanceToday']);
     final headcount = _map(data['headcount']);
-    final leave = _map(data['leave']);
 
     final totalEmployees = _n(headcount['total']) > 0
         ? _n(headcount['total'])
@@ -425,283 +442,179 @@ class _OrganisationPulseCard extends StatelessWidget {
 
     final notCheckedIn =
         _n(today['notCheckedIn']) > 0 ? _n(today['notCheckedIn']) : 38;
-    final lateCount = _n(today['late']) > 0 ? _n(today['late']) : 12;
-    final newJoiners =
-        _n(headcount['newJoiners']) > 0 ? _n(headcount['newJoiners']) : 18;
-    final pendingLeaves =
-        _n(leave['pending']) > 0 ? _n(leave['pending']) : 24;
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: const LinearGradient(
-          colors: [_forestDark, _forestDeep],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: _line),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x330C3831),
-            blurRadius: 20,
-            offset: Offset(0, 8),
+            color: Color(0x061B2A4A),
+            blurRadius: 12,
+            offset: Offset(0, 4),
           ),
         ],
       ),
-      child: Stack(
+      padding: const EdgeInsets.all(18),
+      child: Column(
         children: [
-          Positioned(
-            top: 12,
-            right: 12,
-            child: SizedBox(
-              width: 55,
-              height: 55,
-              child: CustomPaint(painter: _DotGridPainter()),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.timeline_rounded,
-                      color: _mint,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: Text(
-                        'Organisation Pulse',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 15.5,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerRight,
-                        child: Container(
-                          padding: const EdgeInsets.all(2.5),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.32),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _periodTab('Today', DashPeriod.today),
-                              _periodTab('This Week', DashPeriod.week),
-                              _periodTab('This Month', DashPeriod.month),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: 95,
-                      height: 95,
-                      child: CustomPaint(
-                        painter: _PulseRingPainter(ratio),
-                        child: Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                '${(ratio * 100).round()}%',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
-                                  height: 1.1,
-                                ),
-                              ),
-                              Text(
-                                'Present',
-                                style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.8),
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _metricItem(
-                                  icon: Icons.person_rounded,
-                                  iconColor: const Color(0xFF38BDF8),
-                                  iconBg: const Color(0x2838BDF8),
-                                  value: present,
-                                  label: 'Present',
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: _metricItem(
-                                  icon: Icons.groups_rounded,
-                                  iconColor: const Color(0xFFFB923C),
-                                  iconBg: const Color(0x28FB923C),
-                                  value: totalEmployees,
-                                  label: 'Total Employees',
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _metricItem(
-                                  icon: Icons.error_outline_rounded,
-                                  iconColor: const Color(0xFFF97316),
-                                  iconBg: const Color(0x28F97316),
-                                  value: notCheckedIn,
-                                  label: 'Not Checked In',
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: _metricItem(
-                                  icon: Icons.access_time_rounded,
-                                  iconColor: const Color(0xFF38BDF8),
-                                  iconBg: const Color(0x2838BDF8),
-                                  value: lateCount,
-                                  label: 'Late',
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _metricItem(
-                                  icon: Icons.person_add_alt_1_outlined,
-                                  iconColor: const Color(0xFF34D399),
-                                  iconBg: const Color(0x2834D399),
-                                  value: newJoiners,
-                                  label: 'New Joiners',
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: onPendingLeavesTap,
-                                  child: _metricItem(
-                                    icon: Icons.calendar_today_outlined,
-                                    iconColor: const Color(0xFF818CF8),
-                                    iconBg: const Color(0x28818CF8),
-                                    value: pendingLeaves,
-                                    label: 'Pending Leaves',
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _periodTab(String label, DashPeriod target) {
-    final active = period == target;
-    return GestureDetector(
-      onTap: () => onPeriodChanged(target),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 5.5, vertical: 3),
-        decoration: BoxDecoration(
-          color: active ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: active ? _forestDark : Colors.white.withValues(alpha: 0.75),
-            fontSize: 10,
-            fontWeight: active ? FontWeight.w600 : FontWeight.w500,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _metricItem({
-    required IconData icon,
-    required Color iconColor,
-    required Color iconBg,
-    required int value,
-    required String label,
-  }) {
-    return Row(
-      children: [
-        Container(
-          width: 30,
-          height: 30,
-          decoration: BoxDecoration(
-            color: iconBg,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, size: 16, color: iconColor),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+          Row(
             children: [
-              Text(
-                '$value',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w700,
-                  height: 1.1,
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFECFDF5),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.timeline_rounded,
+                  color: Color(0xFF059669),
+                  size: 18,
                 ),
               ),
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.72),
-                  fontSize: 10,
-                  fontWeight: FontWeight.w400,
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'Organisation Pulse',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: _ink,
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ],
           ),
-        ),
-      ],
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 96,
+                height: 96,
+                child: CustomPaint(
+                  painter: _PulseRingPainter(
+                    ratio,
+                    trackColor: const Color(0xFFF1F5F9),
+                    progressColor: const Color(0xFF10B981),
+                  ),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '${(ratio * 100).round()}%',
+                          style: const TextStyle(
+                            color: _ink,
+                            fontSize: 21,
+                            fontWeight: FontWeight.w700,
+                            height: 1.1,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        const Text(
+                          'Present',
+                          style: TextStyle(
+                            color: _soft,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  children: [
+                    _metricRow(
+                      icon: Icons.groups_rounded,
+                      iconColor: const Color(0xFF2563EB),
+                      iconBg: const Color(0xFFEFF6FF),
+                      label: 'Total Employees',
+                      value: totalEmployees,
+                    ),
+                    const SizedBox(height: 8),
+                    _metricRow(
+                      icon: Icons.person_rounded,
+                      iconColor: const Color(0xFF059669),
+                      iconBg: const Color(0xFFECFDF5),
+                      label: 'Present',
+                      value: present,
+                    ),
+                    const SizedBox(height: 8),
+                    _metricRow(
+                      icon: Icons.error_outline_rounded,
+                      iconColor: const Color(0xFFEA580C),
+                      iconBg: const Color(0xFFFFF7ED),
+                      label: 'Not Checked In',
+                      value: notCheckedIn,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _metricRow({
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBg,
+    required String label,
+    required int value,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFF1F5F9)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 26,
+            height: 26,
+            decoration: BoxDecoration(
+              color: iconBg,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 14, color: iconColor),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: _soft,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            '$value',
+            style: const TextStyle(
+              color: _ink,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1553,36 +1466,27 @@ class _HeadcountCard extends StatelessWidget {
   }
 }
 
-class _DotGridPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.white.withValues(alpha: 0.12);
-    const spacing = 7.0;
-    const radius = 1.2;
-    for (double x = 0; x < size.width; x += spacing) {
-      for (double y = 0; y < size.height; y += spacing) {
-        canvas.drawCircle(Offset(x, y), radius, paint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
 
 class _PulseRingPainter extends CustomPainter {
   final double value;
-  _PulseRingPainter(this.value);
+  final Color trackColor;
+  final Color progressColor;
+
+  _PulseRingPainter(
+    this.value, {
+    this.trackColor = const Color(0xFFF1F5F9),
+    this.progressColor = const Color(0xFF10B981),
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
     final track = Paint()
-      ..color = Colors.white.withValues(alpha: 0.14)
+      ..color = trackColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 9;
     final arc = Paint()
-      ..color = _mint
+      ..color = progressColor
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
       ..strokeWidth = 9;
@@ -1600,7 +1504,10 @@ class _PulseRingPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_PulseRingPainter old) => old.value != value;
+  bool shouldRepaint(_PulseRingPainter old) =>
+      old.value != value ||
+      old.trackColor != trackColor ||
+      old.progressColor != progressColor;
 }
 
 int _n(Object? value) => (value as num?)?.toInt() ?? 0;

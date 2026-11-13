@@ -279,12 +279,17 @@ class _TaskDashboardState extends State<TaskDashboard> {
         color: _taskBrown,
         onRefresh: load,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
+          padding: EdgeInsets.fromLTRB(
+            responsiveHorizontalPadding(context, mobilePadding: 16),
+            12,
+            responsiveHorizontalPadding(context, mobilePadding: 16),
+            120,
+          ),
           children: [
             // Top module switcher if provided
             if (widget.moduleSwitch != null) ...[
               widget.moduleSwitch!,
-              const SizedBox(height: 14),
+              const SizedBox(height: 18),
             ],
 
             // ── Header Section ──────────────────────────────────────────

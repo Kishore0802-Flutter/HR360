@@ -427,146 +427,151 @@ class _StoryPageState extends State<StoryPage> with TickerProviderStateMixin {
     return Scaffold(
       backgroundColor: story.background,
       body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(22, 4, 12, 0),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: widget.onFinish,
-                  child: const Text(
-                    'Skip',
-                    style: TextStyle(
-                      color: Color(0xFF8B93A7),
-                      fontWeight: FontWeight.w600,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(22, 4, 12, 0),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: widget.onFinish,
+                      child: const Text(
+                        'Skip',
+                        style: TextStyle(
+                          color: Color(0xFF8B93A7),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
-            Expanded(
-              child: PageView.builder(
-                controller: pages,
-                itemCount: _stories.length,
-                onPageChanged: (value) => setState(() => index = value),
-                itemBuilder: (context, i) {
-                  final page = _stories[i];
-                  return ColoredBox(
-                    color: page.background,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(22, 0, 22, 0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text.rich(
-                                TextSpan(
-                                  children: [
-                                    TextSpan(text: '${page.lead}\n'),
+                Expanded(
+                  child: PageView.builder(
+                    controller: pages,
+                    itemCount: _stories.length,
+                    onPageChanged: (value) => setState(() => index = value),
+                    itemBuilder: (context, i) {
+                      final page = _stories[i];
+                      return ColoredBox(
+                        color: page.background,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(22, 0, 22, 0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text.rich(
                                     TextSpan(
-                                      text: page.accent,
-                                      style: TextStyle(color: page.color),
+                                      children: [
+                                        TextSpan(text: '${page.lead}\n'),
+                                        TextSpan(
+                                          text: page.accent,
+                                          style: TextStyle(color: page.color),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                                style: const TextStyle(
-                                  color: Color(0xFF1B2A4A),
-                                  fontSize: 32,
-                                  height: 1.12,
-                                  fontWeight: FontWeight.w800,
-                                ),
+                                    style: const TextStyle(
+                                      color: Color(0xFF1B2A4A),
+                                      fontSize: 32,
+                                      height: 1.12,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    page.body,
+                                    style: const TextStyle(
+                                      color: Color(0xFF6E7C8A),
+                                      fontSize: 15,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 10),
+                            ),
+                            const SizedBox(height: 8),
+                            Expanded(
+                              child: _StoryFrame(
+                                story: page,
+                                motion: float,
+                                active: i == index,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(22, 10, 22, 18),
+                  child: Row(
+                    children: [
+                      for (var i = 0; i < _stories.length; i++)
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 280),
+                          curve: Curves.easeOut,
+                          margin: const EdgeInsets.only(right: 6),
+                          width: i == index ? 22 : 7,
+                          height: 7,
+                          decoration: BoxDecoration(
+                            color: i == index
+                                ? story.color
+                                : story.color.withValues(alpha: 0.28),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      const Spacer(),
+                      if (last)
+                        FilledButton(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: story.color,
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(0, 48),
+                            padding: const EdgeInsets.symmetric(horizontal: 18),
+                            shape: const StadiumBorder(),
+                          ),
+                          onPressed: next,
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
                               Text(
-                                page.body,
-                                style: const TextStyle(
-                                  color: Color(0xFF6E7C8A),
-                                  fontSize: 15,
-                                  height: 1.4,
-                                ),
+                                'Get Started',
+                                style: TextStyle(fontWeight: FontWeight.w700),
                               ),
+                              SizedBox(width: 6),
+                              Icon(Icons.arrow_forward_rounded, size: 18),
                             ],
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Expanded(
-                          child: _StoryFrame(
-                            story: page,
-                            motion: float,
-                            active: i == index,
+                        )
+                      else
+                        Material(
+                          color: story.color,
+                          shape: const CircleBorder(),
+                          child: InkWell(
+                            customBorder: const CircleBorder(),
+                            onTap: next,
+                            child: const SizedBox(
+                              width: 52,
+                              height: 52,
+                              child: Icon(
+                                Icons.arrow_forward_rounded,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
                         ),
-                      ],
-                    ),
-                  );
-                },
-              ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(22, 10, 22, 18),
-              child: Row(
-                children: [
-                  for (var i = 0; i < _stories.length; i++)
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 280),
-                      curve: Curves.easeOut,
-                      margin: const EdgeInsets.only(right: 6),
-                      width: i == index ? 22 : 7,
-                      height: 7,
-                      decoration: BoxDecoration(
-                        color: i == index
-                            ? story.color
-                            : story.color.withValues(alpha: 0.28),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  const Spacer(),
-                  if (last)
-                    FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: story.color,
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(0, 48),
-                        padding: const EdgeInsets.symmetric(horizontal: 18),
-                        shape: const StadiumBorder(),
-                      ),
-                      onPressed: next,
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Get Started',
-                            style: TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                          SizedBox(width: 6),
-                          Icon(Icons.arrow_forward_rounded, size: 18),
-                        ],
-                      ),
-                    )
-                  else
-                    Material(
-                      color: story.color,
-                      shape: const CircleBorder(),
-                      child: InkWell(
-                        customBorder: const CircleBorder(),
-                        onTap: next,
-                        child: const SizedBox(
-                          width: 52,
-                          height: 52,
-                          child: Icon(
-                            Icons.arrow_forward_rounded,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -784,9 +789,382 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  Widget _buildLogoSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        SizedBox(
+          height: 34,
+          width: double.infinity,
+          child: Image.asset(
+            'assets/logo_mark.png',
+            alignment: Alignment.center,
+            fit: BoxFit.contain,
+          ),
+        ),
+        const SizedBox(height: 2),
+        const Text(
+          'From Joining to Growing',
+          style: TextStyle(
+            color: Color(0xFF8E99A8),
+            fontSize: 11,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWelcomeHeader({bool compact = false}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 6, right: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Welcome back!',
+                  style: TextStyle(
+                    color: _navy,
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.4,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Sign in to access your HRMS account and stay connected with your workplace.',
+                  style: TextStyle(
+                    color: Color(0xFF8E99A8),
+                    fontSize: 13,
+                    height: 1.45,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        SizedBox(
+          width: compact ? 110 : 142,
+          height: compact ? 120 : 156,
+          child: Image.asset(
+            'assets/login_illustration.png',
+            fit: BoxFit.contain,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFormFields() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Email',
+          style: TextStyle(
+            color: _navy,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: id,
+          autofillHints: const [AutofillHints.username],
+          textInputAction: TextInputAction.next,
+          onChanged: (_) => setState(() {}),
+          validator: (s) =>
+              s == null || s.trim().isEmpty ? 'Enter your email' : null,
+          decoration: field(
+            'ahmed@hr360.dev',
+            Icons.mail_outline,
+            suffix: recentEmails.isNotEmpty
+                ? PopupMenuButton<String>(
+                    tooltip: 'Stored accounts',
+                    icon: const Icon(
+                      Icons.arrow_drop_down_rounded,
+                      color: Color(0xFF64748B),
+                      size: 28,
+                    ),
+                    position: PopupMenuPosition.under,
+                    elevation: 6,
+                    color: Colors.white,
+                    surfaceTintColor: Colors.white,
+                    constraints: const BoxConstraints(
+                      minWidth: 220,
+                      maxWidth: 340,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    onSelected: (email) {
+                      setState(() {
+                        id.text = email;
+                        id.selection = TextSelection.fromPosition(
+                          TextPosition(offset: email.length),
+                        );
+                      });
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem<String>(
+                        enabled: false,
+                        height: 32,
+                        child: Text(
+                          'STORED EMAILS',
+                          style: TextStyle(
+                            color: Color(0xFF8E99A8),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ),
+                      for (final email in recentEmails.take(5))
+                        PopupMenuItem<String>(
+                          value: email,
+                          height: 44,
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 28,
+                                height: 28,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE7F6EE),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.person_outline_rounded,
+                                  size: 16,
+                                  color: _green,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  email,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: id.text.trim().toLowerCase() ==
+                                            email.toLowerCase()
+                                        ? FontWeight.w700
+                                        : FontWeight.w500,
+                                    color: id.text.trim().toLowerCase() ==
+                                            email.toLowerCase()
+                                        ? _green
+                                        : const Color(0xFF1B2A4A),
+                                  ),
+                                ),
+                              ),
+                              if (id.text.trim().toLowerCase() ==
+                                  email.toLowerCase()) ...[
+                                const SizedBox(width: 8),
+                                const Icon(
+                                  Icons.check_rounded,
+                                  size: 17,
+                                  color: _green,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                    ],
+                  )
+                : null,
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Password',
+          style: TextStyle(
+            color: _navy,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: password,
+          obscureText: !show,
+          autofillHints: const [AutofillHints.password],
+          onFieldSubmitted: (_) => submit(),
+          validator: (s) =>
+              s == null || s.isEmpty ? 'Enter your password' : null,
+          decoration: field(
+            'Enter your password',
+            Icons.lock_outline,
+            suffix: IconButton(
+              tooltip: show ? 'Hide password' : 'Show password',
+              onPressed: () => setState(() => show = !show),
+              icon: Icon(
+                show ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                color: const Color(0xFF8E99A8),
+                size: 20,
+              ),
+            ),
+          ),
+        ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            onPressed: busy
+                ? null
+                : () => openRoute(
+                      context,
+                      '/recovery',
+                      () => RecoveryPage(api: widget.api),
+                    ),
+            style: TextButton.styleFrom(
+              foregroundColor: _green,
+              padding: const EdgeInsets.symmetric(vertical: 4),
+            ),
+            child: const Text(
+              'Forgot password?',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            ),
+          ),
+        ),
+        if (error != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Text(
+              error.toString(),
+              style: const TextStyle(color: Colors.red, fontSize: 13),
+            ),
+          ),
+        FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: primary,
+            foregroundColor: Colors.white,
+            disabledBackgroundColor: primary.withValues(alpha: 0.6),
+            minimumSize: const Size(double.infinity, 54),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(28),
+            ),
+            elevation: 0,
+          ),
+          onPressed: busy ? null : submit,
+          child: busy
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.arrow_forward_rounded, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'Sign in',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.paddingOf(context).bottom;
+    final width = MediaQuery.sizeOf(context).width;
+    final isTablet = width >= 640;
+
+    if (isTablet) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF7F9FB),
+        body: Stack(
+          children: [
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: 240,
+              child: const IgnorePointer(
+                child: CustomPaint(painter: _FooterPainter()),
+              ),
+            ),
+            SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 24),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 500),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: const Color(0xFFE5E7EB), width: 1.2),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x0E0D2554),
+                            blurRadius: 32,
+                            offset: Offset(0, 12),
+                          ),
+                          BoxShadow(
+                            color: Color(0x04000000),
+                            blurRadius: 8,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.fromLTRB(36, 32, 36, 30),
+                      child: Form(
+                        key: form,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildLogoSection(),
+                            const SizedBox(height: 26),
+                            _buildWelcomeHeader(compact: true),
+                            const SizedBox(height: 20),
+                            _buildFormFields(),
+                            const SizedBox(height: 22),
+                            const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.shield_outlined, size: 14, color: Color(0xFF94A3B8)),
+                                SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    'Enterprise-grade 256-bit encryption',
+                                    style: TextStyle(
+                                      color: Color(0xFF94A3B8),
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -805,334 +1183,11 @@ class _LoginPageState extends State<LoginPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    SizedBox(
-                                      height: 34,
-                                      width: double.infinity,
-                                      child: Image.asset(
-                                        'assets/logo_mark.png',
-                                        alignment: Alignment.center,
-                                        fit: BoxFit.contain,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    const Text(
-                                      'From Joining to Growing',
-                                      style: TextStyle(
-                                        color: Color(0xFF8E99A8),
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
+                          _buildLogoSection(),
                           const SizedBox(height: 50),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Expanded(
-                                child: Padding(
-                                  padding: EdgeInsets.only(top: 6, right: 8),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Welcome back!',
-                                        style: TextStyle(
-                                          color: _navy,
-                                          fontSize: 26,
-                                          fontWeight: FontWeight.w800,
-                                          letterSpacing: -0.4,
-                                        ),
-                                      ),
-                                      SizedBox(height: 8),
-                                      Text(
-                                        'Sign in to access your HRMS account and stay connected with your workplace.',
-                                        style: TextStyle(
-                                          color: Color(0xFF8E99A8),
-                                          fontSize: 13,
-                                          height: 1.45,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              SizedBox(
-                                width: 142,
-                                height: 156,
-                                child: Image.asset(
-                                  'assets/login_illustration.png',
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                            ],
-                          ),
+                          _buildWelcomeHeader(),
                           const SizedBox(height: 18),
-                          const Text(
-                            'Email',
-                            style: TextStyle(
-                              color: _navy,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextFormField(
-                            controller: id,
-                            autofillHints: const [AutofillHints.username],
-                            textInputAction: TextInputAction.next,
-                            onChanged: (_) => setState(() {}),
-                            validator: (s) => s == null || s.trim().isEmpty
-                                ? 'Enter your email'
-                                : null,
-                            decoration: field(
-                              'ahmed@hr360.dev',
-                              Icons.mail_outline,
-                              suffix: recentEmails.isNotEmpty
-                                  ? PopupMenuButton<String>(
-                                      tooltip: 'Stored accounts',
-                                      icon: const Icon(
-                                        Icons.arrow_drop_down_rounded,
-                                        color: Color(0xFF64748B),
-                                        size: 28,
-                                      ),
-                                      position: PopupMenuPosition.under,
-                                      elevation: 6,
-                                      color: Colors.white,
-                                      surfaceTintColor: Colors.white,
-                                      constraints: const BoxConstraints(
-                                        minWidth: 220,
-                                        maxWidth: 340,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                        side: const BorderSide(
-                                          color: Color(0xFFE2E8F0),
-                                        ),
-                                      ),
-                                      onSelected: (email) {
-                                        setState(() {
-                                          id.text = email;
-                                          id.selection =
-                                              TextSelection.fromPosition(
-                                                TextPosition(
-                                                  offset: email.length,
-                                                ),
-                                              );
-                                        });
-                                      },
-                                      itemBuilder: (context) => [
-                                        const PopupMenuItem<String>(
-                                          enabled: false,
-                                          height: 32,
-                                          child: Text(
-                                            'STORED EMAILS',
-                                            style: TextStyle(
-                                              color: Color(0xFF8E99A8),
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w800,
-                                              letterSpacing: 0.8,
-                                            ),
-                                          ),
-                                        ),
-                                        for (final email in recentEmails.take(
-                                          5,
-                                        ))
-                                          PopupMenuItem<String>(
-                                            value: email,
-                                            height: 44,
-                                            child: Row(
-                                              children: [
-                                                Container(
-                                                  width: 28,
-                                                  height: 28,
-                                                  decoration: BoxDecoration(
-                                                    color: const Color(
-                                                      0xFFE7F6EE,
-                                                    ),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          8,
-                                                        ),
-                                                  ),
-                                                  child: const Icon(
-                                                    Icons
-                                                        .person_outline_rounded,
-                                                    size: 16,
-                                                    color: _green,
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 10),
-                                                Expanded(
-                                                  child: Text(
-                                                    email,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    style: TextStyle(
-                                                      fontSize: 13.5,
-                                                      fontWeight:
-                                                          id.text
-                                                                  .trim()
-                                                                  .toLowerCase() ==
-                                                              email
-                                                                  .toLowerCase()
-                                                          ? FontWeight.w700
-                                                          : FontWeight.w500,
-                                                      color:
-                                                          id.text
-                                                                  .trim()
-                                                                  .toLowerCase() ==
-                                                              email
-                                                                  .toLowerCase()
-                                                          ? _green
-                                                          : const Color(
-                                                              0xFF1B2A4A,
-                                                            ),
-                                                    ),
-                                                  ),
-                                                ),
-                                                if (id.text
-                                                        .trim()
-                                                        .toLowerCase() ==
-                                                    email.toLowerCase()) ...[
-                                                  const SizedBox(width: 8),
-                                                  const Icon(
-                                                    Icons.check_rounded,
-                                                    size: 17,
-                                                    color: _green,
-                                                  ),
-                                                ],
-                                              ],
-                                            ),
-                                          ),
-                                      ],
-                                    )
-                                  : null,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'Password',
-                            style: TextStyle(
-                              color: _navy,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextFormField(
-                            controller: password,
-                            obscureText: !show,
-                            autofillHints: const [AutofillHints.password],
-                            onFieldSubmitted: (_) => submit(),
-                            validator: (s) => s == null || s.isEmpty
-                                ? 'Enter your password'
-                                : null,
-                            decoration: field(
-                              'Enter your password',
-                              Icons.lock_outline,
-                              suffix: IconButton(
-                                tooltip: show
-                                    ? 'Hide password'
-                                    : 'Show password',
-                                onPressed: () => setState(() => show = !show),
-                                icon: Icon(
-                                  show
-                                      ? Icons.visibility_off_outlined
-                                      : Icons.visibility_outlined,
-                                  color: const Color(0xFF8E99A8),
-                                  size: 20,
-                                ),
-                              ),
-                            ),
-                          ),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: busy
-                                  ? null
-                                  : () => openRoute(
-                                      context,
-                                      '/recovery',
-                                      () => RecoveryPage(api: widget.api),
-                                    ),
-                              style: TextButton.styleFrom(
-                                foregroundColor: _green,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 4,
-                                ),
-                              ),
-                              child: const Text(
-                                'Forgot password?',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          ),
-                          if (error != null)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: Text(
-                                error.toString(),
-                                style: const TextStyle(
-                                  color: Colors.red,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          FilledButton(
-                            style: FilledButton.styleFrom(
-                              backgroundColor: primary,
-                              foregroundColor: Colors.white,
-                              disabledBackgroundColor: primary.withValues(
-                                alpha: 0.6,
-                              ),
-                              minimumSize: const Size(double.infinity, 54),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(28),
-                              ),
-                              elevation: 0,
-                            ),
-                            onPressed: busy ? null : submit,
-                            child: busy
-                                ? const SizedBox(
-                                    width: 22,
-                                    height: 22,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : const Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.arrow_forward_rounded,
-                                        size: 20,
-                                      ),
-                                      SizedBox(width: 8),
-                                      Text(
-                                        'Sign in',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                          ),
+                          _buildFormFields(),
                         ],
                       ),
                     ),

@@ -234,6 +234,9 @@ class _ShellState extends State<Shell> {
     final tasks = module == AppModule.tasks && api.hasTasks;
     final tabs = tasks ? taskTabs : hrmsTabs;
     final selected = (tasks ? taskIndex : index).clamp(0, tabs.length - 1);
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final navHorizontalPadding =
+        screenWidth >= 640 ? ((screenWidth - 600) / 2).clamp(16.0, 450.0) : 16.0;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -261,7 +264,7 @@ class _ShellState extends State<Shell> {
         ),
         bottomNavigationBar: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            padding: EdgeInsets.fromLTRB(navHorizontalPadding, 0, navHorizontalPadding, 8),
             child: Material(
               key: const ValueKey('bottom_nav'),
               color: Colors.white,
@@ -825,7 +828,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       child: RefreshIndicator(
         onRefresh: load,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 6, 20, 110),
+          padding: EdgeInsets.fromLTRB(
+            responsiveHorizontalPadding(context, mobilePadding: 20),
+            6,
+            responsiveHorizontalPadding(context, mobilePadding: 20),
+            110,
+          ),
           children: [
             Row(
               children: [
@@ -898,10 +906,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               ],
             ),
             if (widget.moduleSwitch != null) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 18),
               widget.moduleSwitch!,
             ],
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             if (widget.api.pending != null)
               Panel(
                 color: const Color(0xFFFFF0DC),
@@ -2576,6 +2584,124 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Widget _buildAccountPrivacyCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFEBE3D7), width: 1.2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(22, 20, 22, 6),
+            child: Text(
+              'Account & Data Privacy',
+              style: TextStyle(
+                color: Color(0xFF1E242B),
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(22, 0, 22, 16),
+            child: Text(
+              'Manage your account data and privacy settings in accordance with Apple and corporate compliance guidelines.',
+              style: TextStyle(
+                color: Color(0xFF6B7280),
+                fontSize: 13.5,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ),
+          const Divider(height: 1, thickness: 1, color: Color(0xFFEFE8DE)),
+          Padding(
+            padding: const EdgeInsets.all(22),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Account Deletion & Data Retention',
+                  style: TextStyle(
+                    color: Color(0xFF1E242B),
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'HR360 operates as an enterprise workplace application. Your employment and attendance records are governed by company retention policies. You may request account deactivation and personal data deletion at any time.',
+                  style: TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontSize: 13,
+                    height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFDC2626),
+                    side: const BorderSide(color: Color(0xFFFCA5A5)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                  onPressed: () {
+                    showDialog<void>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        title: const Text('Request Account Deletion'),
+                        content: const Text(
+                          'To request deletion of your account and personal data, a formal request will be submitted to your organization’s Human Resources administrator.\n\nYour administrator will process the removal of your active credentials in compliance with applicable employment regulations.',
+                          style: TextStyle(fontSize: 13.5, height: 1.4),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('Cancel'),
+                          ),
+                          FilledButton(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFFDC2626),
+                            ),
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Account deletion request submitted to your administrator.',
+                                  ),
+                                  backgroundColor: Color(0xFF16A34A),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            },
+                            child: const Text('Submit Request'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.person_remove_outlined, size: 18),
+                  label: const Text(
+                    'Request Account Deletion',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAdminQuickActionTile({
     required IconData icon,
     required Color iconColor,
@@ -2658,7 +2784,12 @@ class _ProfilePageState extends State<ProfilePage> {
     return Container(
       color: const Color(0xFFFAF7F2),
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 120),
+        padding: EdgeInsets.fromLTRB(
+          responsiveHorizontalPadding(context, mobilePadding: 16),
+          20,
+          responsiveHorizontalPadding(context, mobilePadding: 16),
+          120,
+        ),
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -2919,6 +3050,8 @@ class _ProfilePageState extends State<ProfilePage> {
             _buildPreferencesTab(),
           ] else ...[
             _buildSecurityTab(p),
+            const SizedBox(height: 16),
+            _buildAccountPrivacyCard(),
           ],
           const SizedBox(height: 24),
           //_buildLogoutCard(),

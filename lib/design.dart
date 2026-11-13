@@ -49,6 +49,43 @@ ThemeData appTheme() => ThemeData(
   ),
 );
 
+bool isTabletScreen(BuildContext context) =>
+    MediaQuery.sizeOf(context).width >= 640;
+
+double responsiveHorizontalPadding(
+  BuildContext context, {
+  double maxContentWidth = 860,
+  double mobilePadding = 16,
+}) {
+  final width = MediaQuery.sizeOf(context).width;
+  if (width < 640) return mobilePadding;
+  return ((width - maxContentWidth) / 2).clamp(mobilePadding, 500.0);
+}
+
+class AdaptiveContainer extends StatelessWidget {
+  final Widget child;
+  final double maxWidth;
+  final AlignmentGeometry alignment;
+  const AdaptiveContainer({
+    super.key,
+    required this.child,
+    this.maxWidth = 860,
+    this.alignment = Alignment.topCenter,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isTabletScreen(context)) return child;
+    return Align(
+      alignment: alignment,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        child: child,
+      ),
+    );
+  }
+}
+
 class TileLoader extends StatefulWidget {
   final double size;
   const TileLoader({super.key, this.size = 64});

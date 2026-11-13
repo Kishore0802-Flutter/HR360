@@ -15,7 +15,6 @@ class LeavePage extends StatefulWidget {
 }
 
 class _LeavePageState extends State<LeavePage> {
-  int _selectedTab = 0; // 0: My leave, 1: Calendar
   int _selectedYear = 2026;
   String _statusFilter = 'All';
   Json? balances;
@@ -220,60 +219,6 @@ class _LeavePageState extends State<LeavePage> {
     return fallback;
   }
 
-  Widget _buildTopTabs() {
-    return Container(
-      height: 42,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5EFEB),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      padding: const EdgeInsets.all(3),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildTabButton('My leave', 0),
-          _buildTabButton('Calendar', 1),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabButton(String title, int index) {
-    final isSelected = _selectedTab == index;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedTab = index),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(9),
-          border: isSelected
-              ? Border.all(color: const Color(0xFFE5DFD7), width: 1)
-              : null,
-          boxShadow: isSelected
-              ? const [
-                  BoxShadow(
-                    color: Color(0x0A000000),
-                    blurRadius: 4,
-                    offset: Offset(0, 1),
-                  ),
-                ]
-              : null,
-        ),
-        child: Text(
-          title,
-          style: TextStyle(
-            color: isSelected
-                ? const Color(0xFF1E242B)
-                : const Color(0xFF6B7280),
-            fontSize: 13.5,
-            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildYearSelector() {
     final currentYear = DateTime.now().year;
     final years = [
@@ -368,7 +313,7 @@ class _LeavePageState extends State<LeavePage> {
     );
   }
 
-  Widget _buildBalanceCard(Json item) {
+  Widget _buildBalanceCard(Json item, {double? width}) {
     final type = item['leaveType'] is Map ? item['leaveType'] as Map : item;
     final name = (item['name'] ?? type['name'] ?? 'Leave').toString();
     final color = _parseColor(item['color'] ?? type['color']);
@@ -388,10 +333,10 @@ class _LeavePageState extends State<LeavePage> {
     );
 
     return Container(
-      width: 220,
-      padding: const EdgeInsets.all(14),
+      width: width,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFFAF8F5),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFEFE8DE), width: 1),
       ),
@@ -406,14 +351,14 @@ class _LeavePageState extends State<LeavePage> {
                 height: 8,
                 decoration: BoxDecoration(color: color, shape: BoxShape.circle),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 7),
               Expanded(
                 child: Text(
                   name,
                   style: const TextStyle(
                     color: Color(0xFF1E242B),
                     fontWeight: FontWeight.w700,
-                    fontSize: 14,
+                    fontSize: 13.5,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -421,9 +366,9 @@ class _LeavePageState extends State<LeavePage> {
               ),
               if (!isPaid)
                 Container(
-                  margin: const EdgeInsets.only(left: 6),
+                  margin: const EdgeInsets.only(left: 4),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
+                    horizontal: 5,
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
@@ -434,14 +379,14 @@ class _LeavePageState extends State<LeavePage> {
                     'Unpaid',
                     style: TextStyle(
                       color: Color(0xFF8C7B70),
-                      fontSize: 10.5,
+                      fontSize: 10,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
@@ -450,18 +395,18 @@ class _LeavePageState extends State<LeavePage> {
                 _count(available),
                 style: const TextStyle(
                   color: Color(0xFF1E242B),
-                  fontSize: 28,
+                  fontSize: 24,
                   fontWeight: FontWeight.w800,
                   height: 1,
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 5),
               const Flexible(
                 child: Text(
                   'available',
                   style: TextStyle(
                     color: Color(0xFF6B7280),
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.w400,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -469,23 +414,23 @@ class _LeavePageState extends State<LeavePage> {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           const Divider(height: 1, thickness: 1, color: Color(0xFFF4EFEB)),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           _balanceRow('Balance', _count(balance)),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           _balanceRow('Pending', _count(pending)),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           _balanceRow('Used', _count(used)),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           _balanceRow('Carried forward', _count(carried)),
           if (allowNegative && negativeLimit > 0) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               'May go negative up to ${_count(negativeLimit)} days',
               style: const TextStyle(
                 color: Color(0xFF8C7B70),
-                fontSize: 11,
+                fontSize: 10.5,
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -504,19 +449,19 @@ class _LeavePageState extends State<LeavePage> {
             label,
             style: const TextStyle(
               color: Color(0xFF6B7280),
-              fontSize: 12.5,
+              fontSize: 11.5,
               fontWeight: FontWeight.w400,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 4),
         Text(
           value,
           style: const TextStyle(
             color: Color(0xFF1E242B),
-            fontSize: 12.5,
+            fontSize: 11.5,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -865,30 +810,26 @@ class _LeavePageState extends State<LeavePage> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isWide = constraints.maxWidth >= 720;
-        if (isWide) {
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (int i = 0; i < bs.length; i++) ...[
-                if (i > 0) const SizedBox(width: 12),
-                Expanded(child: _buildBalanceCard(bs[i])),
-              ],
-            ],
-          );
+        if (bs.length == 1) {
+          return _buildBalanceCard(bs[0], width: double.infinity);
         }
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          clipBehavior: Clip.none,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (int i = 0; i < bs.length; i++) ...[
-                if (i > 0) const SizedBox(width: 12),
-                _buildBalanceCard(bs[i]),
-              ],
-            ],
-          ),
+
+        final crossAxisCount = constraints.maxWidth >= 720
+            ? (bs.length >= 3 ? 3 : 2)
+            : 2;
+        final cardWidth = (constraints.maxWidth - (crossAxisCount - 1) * 10) / crossAxisCount;
+        return Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            for (int i = 0; i < bs.length; i++)
+              _buildBalanceCard(
+                bs[i],
+                width: (bs.length.isOdd && i == bs.length - 1 && crossAxisCount == 2)
+                    ? constraints.maxWidth
+                    : cardWidth,
+              ),
+          ],
         );
       },
     );
@@ -944,135 +885,95 @@ class _LeavePageState extends State<LeavePage> {
           onRefresh: load,
           color: const Color(0xFFBA4728),
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+            padding: EdgeInsets.fromLTRB(
+              responsiveHorizontalPadding(context, mobilePadding: 16),
+              16,
+              responsiveHorizontalPadding(context, mobilePadding: 16),
+              32,
+            ),
             children: [
-              // Segmented Tab Bar at top
-              Align(
-                alignment: Alignment.centerLeft,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: _buildTopTabs(),
+              // Card 1: My balances
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFEFE8DE), width: 1),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'My balances',
+                      style: TextStyle(
+                        color: Color(0xFF1E242B),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Computed from the leave ledger: grants, accruals, carry-forward, adjustments and usage.',
+                      style: TextStyle(
+                        color: Color(0xFF6B7280),
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildYearSelector(),
+                        const SizedBox(width: 8),
+                        Flexible(child: _buildApplyButton()),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    _buildBalancesSection(bs),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              if (_selectedTab == 0) ...[
-                // Card 1: My balances
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: const Color(0xFFEFE8DE),
-                      width: 1,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'My balances',
-                        style: TextStyle(
-                          color: Color(0xFF1E242B),
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.2,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Computed from the leave ledger: grants, accruals, carry-forward, adjustments and usage.',
-                        style: TextStyle(
-                          color: Color(0xFF6B7280),
-                          fontSize: 13,
-                          height: 1.4,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _buildYearSelector(),
-                          const SizedBox(width: 8),
-                          Flexible(child: _buildApplyButton()),
-                        ],
-                      ),
-                      const SizedBox(height: 18),
-                      _buildBalancesSection(bs),
-                    ],
-                  ),
+              const SizedBox(height: 18),
+              // Card 2: My requests (Card View)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFEFE8DE), width: 1),
                 ),
-                const SizedBox(height: 18),
-                // Card 2: My requests (Card View)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: const Color(0xFFEFE8DE),
-                      width: 1,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Expanded(
-                            child: Text(
-                              'My requests',
-                              style: TextStyle(
-                                color: Color(0xFF1E242B),
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.2,
-                              ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'My requests',
+                            style: TextStyle(
+                              color: Color(0xFF1E242B),
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.2,
                             ),
                           ),
+                        ),
+                        if (requests.isNotEmpty) ...[
                           const SizedBox(width: 8),
                           _buildStatusFilterDropdown(),
                         ],
-                      ),
-                      const SizedBox(height: 16),
-                      _buildRequestsSection(),
-                    ],
-                  ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _buildRequestsSection(),
+                  ],
                 ),
-                const SizedBox(height: 18),
-                // Card 3: Leave calendar
-                //   Container(
-                //     width: double.infinity,
-                //     padding: const EdgeInsets.all(16),
-                //     decoration: BoxDecoration(
-                //       color: Colors.white,
-                //       borderRadius: BorderRadius.circular(16),
-                //       border: Border.all(
-                //         color: const Color(0xFFEFE8DE),
-                //         width: 1,
-                //       ),
-                //     ),
-                //     child: _LeaveCalendar(api: widget.api),
-                //   ),
-                // ] else ...[
-                //   // Calendar tab view
-                //   Container(
-                //     width: double.infinity,
-                //     padding: const EdgeInsets.all(16),
-                //     decoration: BoxDecoration(
-                //       color: Colors.white,
-                //       borderRadius: BorderRadius.circular(16),
-                //       border: Border.all(
-                //         color: const Color(0xFFEFE8DE),
-                //         width: 1,
-                //       ),
-                //     ),
-                //     child: _LeaveCalendar(api: widget.api),
-                //   ),
-              ],
+              ),
             ],
           ),
         ),
@@ -4676,7 +4577,12 @@ class _ApplyLeavePageState extends State<ApplyLeavePage> {
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+          padding: EdgeInsets.fromLTRB(
+            responsiveHorizontalPadding(context, maxContentWidth: 720, mobilePadding: 20),
+            0,
+            responsiveHorizontalPadding(context, maxContentWidth: 720, mobilePadding: 20),
+            32,
+          ),
           children: [
             const Text(
               'Weekends and holidays are excluded unless the leave policy counts them.',

@@ -301,20 +301,220 @@ class _EmployeesPageState extends State<EmployeesPage> {
   }
 
   // Filter Modals
+  void _showAllFiltersBottomSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 12, 18, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 38,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFCBD5E1),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: _taskBrown.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.tune_rounded, size: 18, color: _taskBrown),
+                    ),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Text(
+                        'Employee Filters',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _ink),
+                      ),
+                    ),
+                    if (_activeFiltersCount > 0)
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          setState(() {
+                            _selectedDepartmentId = null;
+                            _selectedDepartmentName = null;
+                            _selectedDesignationId = null;
+                            _selectedDesignationName = null;
+                            _selectedTeamId = null;
+                            _selectedTeamName = null;
+                            _selectedStatus = null;
+                            _selectedManagerId = null;
+                            _selectedManagerName = null;
+                            _selectedJoinedDate = null;
+                            _page = 1;
+                          });
+                          _loadEmployees();
+                        },
+                        child: const Text(
+                          'Reset All',
+                          style: TextStyle(color: Color(0xFFC24127), fontWeight: FontWeight.w700, fontSize: 13),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                const Divider(height: 1, color: Color(0xFFF1EDE6)),
+                const SizedBox(height: 8),
+                _filterOptionTile(
+                  icon: Icons.apartment_rounded,
+                  title: 'Department',
+                  value: _selectedDepartmentName ?? 'All Departments',
+                  isSelected: _selectedDepartmentId != null,
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _pickDepartment();
+                  },
+                ),
+                _filterOptionTile(
+                  icon: Icons.badge_outlined,
+                  title: 'Designation',
+                  value: _selectedDesignationName ?? 'All Designations',
+                  isSelected: _selectedDesignationId != null,
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _pickDesignation();
+                  },
+                ),
+                _filterOptionTile(
+                  icon: Icons.groups_outlined,
+                  title: 'Team',
+                  value: _selectedTeamName ?? 'All Teams',
+                  isSelected: _selectedTeamId != null,
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _pickTeam();
+                  },
+                ),
+                _filterOptionTile(
+                  icon: Icons.verified_user_outlined,
+                  title: 'Status',
+                  value: _selectedStatus == null ? 'All Statuses' : (_selectedStatus == 'ACTIVE' ? 'Active' : 'Inactive'),
+                  isSelected: _selectedStatus != null,
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _pickStatus();
+                  },
+                ),
+                _filterOptionTile(
+                  icon: Icons.person_outline_rounded,
+                  title: 'Manager',
+                  value: _selectedManagerName != null ? 'Manager: $_selectedManagerName' : 'All Managers',
+                  isSelected: _selectedManagerId != null,
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _pickManager();
+                  },
+                ),
+                _filterOptionTile(
+                  icon: Icons.calendar_today_rounded,
+                  title: 'Joined Date',
+                  value: _selectedJoinedDate != null ? 'Joined: $_selectedJoinedDate' : 'Any Date',
+                  isSelected: _selectedJoinedDate != null,
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _pickJoinedDate();
+                  },
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _taskBrown,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                    ),
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Apply Filters', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _filterOptionTile({
+    required IconData icon,
+    required String title,
+    required String value,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      dense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      leading: Container(
+        width: 34,
+        height: 34,
+        decoration: BoxDecoration(
+          color: isSelected ? _taskBrown.withValues(alpha: 0.1) : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(icon, size: 18, color: isSelected ? _taskBrown : _soft),
+      ),
+      title: Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _ink)),
+      subtitle: Text(
+        value,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+          color: isSelected ? _taskBrown : _soft,
+        ),
+      ),
+      trailing: const Icon(Icons.chevron_right_rounded, size: 20, color: _soft),
+      onTap: onTap,
+    );
+  }
+
   void _pickDepartment() {
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Center(
+                child: Container(
+                  width: 38,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
               const Text('Filter by Department', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _ink)),
               const SizedBox(height: 12),
               ListTile(
@@ -369,15 +569,26 @@ class _EmployeesPageState extends State<EmployeesPage> {
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Center(
+                child: Container(
+                  width: 38,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
               const Text('Filter by Designation', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _ink)),
               const SizedBox(height: 12),
               ListTile(
@@ -432,15 +643,26 @@ class _EmployeesPageState extends State<EmployeesPage> {
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Center(
+                child: Container(
+                  width: 38,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
               const Text('Filter by Team', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _ink)),
               const SizedBox(height: 12),
               ListTile(
@@ -495,15 +717,26 @@ class _EmployeesPageState extends State<EmployeesPage> {
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Center(
+                child: Container(
+                  width: 38,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
               const Text('Filter by Status', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _ink)),
               const SizedBox(height: 12),
               ListTile(
@@ -558,15 +791,26 @@ class _EmployeesPageState extends State<EmployeesPage> {
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Center(
+                child: Container(
+                  width: 38,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
               const Text('Filter by Manager', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _ink)),
               const SizedBox(height: 12),
               ListTile(
@@ -693,7 +937,12 @@ class _EmployeesPageState extends State<EmployeesPage> {
       body: RefreshIndicator(
         onRefresh: _loadEmployees,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+          padding: EdgeInsets.fromLTRB(
+            responsiveHorizontalPadding(context, mobilePadding: 16),
+            16,
+            responsiveHorizontalPadding(context, mobilePadding: 16),
+            40,
+          ),
           children: [
             // Breadcrumbs, Title & Actions
             Column(
@@ -754,53 +1003,107 @@ class _EmployeesPageState extends State<EmployeesPage> {
               ),
               child: Column(
                 children: [
-                  // Search Row
-                  TextField(
-                    controller: _searchCtrl,
-                    onChanged: _onSearchChanged,
-                    decoration: InputDecoration(
-                      hintText: 'Search name, email, code...',
-                      hintStyle: const TextStyle(fontSize: 13.5, color: _soft),
-                      prefixIcon: const Icon(Icons.search, size: 18, color: _soft),
-                      suffixIcon: _searchCtrl.text.isNotEmpty || _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear, size: 16),
-                              onPressed: () {
-                                _debounceTimer?.cancel();
-                                _searchCtrl.clear();
-                                setState(() {
-                                  _searchQuery = '';
-                                  _page = 1;
-                                });
-                                _loadEmployees();
-                              },
-                            )
-                          : null,
-                      isDense: true,
-                      filled: true,
-                      fillColor: const Color(0xFFF8FAFC),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  // Search Row with Filter Icon Button
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _searchCtrl,
+                          onChanged: _onSearchChanged,
+                          decoration: InputDecoration(
+                            hintText: 'Search name, email, code...',
+                            hintStyle: const TextStyle(fontSize: 13.5, color: _soft),
+                            prefixIcon: const Icon(Icons.search, size: 20, color: _soft),
+                            suffixIcon: _searchCtrl.text.isNotEmpty || _searchQuery.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear, size: 16),
+                                    onPressed: () {
+                                      _debounceTimer?.cancel();
+                                      _searchCtrl.clear();
+                                      setState(() {
+                                        _searchQuery = '';
+                                        _page = 1;
+                                      });
+                                      _loadEmployees();
+                                    },
+                                  )
+                                : null,
+                            isDense: true,
+                            filled: true,
+                            fillColor: const Color(0xFFF8FAFC),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(color: _taskBrown, width: 1.5),
+                            ),
+                          ),
+                          onSubmitted: (val) {
+                            _debounceTimer?.cancel();
+                            setState(() {
+                              _searchQuery = val;
+                              _page = 1;
+                            });
+                            _loadEmployees();
+                          },
+                        ),
                       ),
-                      enabledBorder: OutlineInputBorder(
+                      const SizedBox(width: 8),
+                      Material(
+                        color: _activeFiltersCount > 0 ? const Color(0xFFFFF9F5) : const Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(10),
+                          onTap: _showAllFiltersBottomSheet,
+                          child: Container(
+                            height: 42,
+                            padding: const EdgeInsets.symmetric(horizontal: 11),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: _activeFiltersCount > 0 ? _taskBrown : const Color(0xFFE2E8F0),
+                                width: _activeFiltersCount > 0 ? 1.5 : 1.0,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.tune_rounded,
+                                  size: 19,
+                                  color: _activeFiltersCount > 0 ? _taskBrown : _ink,
+                                ),
+                                if (_activeFiltersCount > 0) ...[
+                                  const SizedBox(width: 5),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: _taskBrown,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      '$_activeFiltersCount',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: _taskBrown, width: 1.5),
-                      ),
-                    ),
-                    onSubmitted: (val) {
-                      _debounceTimer?.cancel();
-                      setState(() {
-                        _searchQuery = val;
-                        _page = 1;
-                      });
-                      _loadEmployees();
-                    },
+                    ],
                   ),
                   const SizedBox(height: 10),
 
@@ -813,6 +1116,7 @@ class _EmployeesPageState extends State<EmployeesPage> {
                           label: 'By Department',
                           valueText: _selectedDepartmentName,
                           isActive: _selectedDepartmentId != null,
+                          prefixIcon: Icons.apartment_rounded,
                           onTap: _pickDepartment,
                           onClear: _selectedDepartmentId != null
                               ? () {
@@ -830,6 +1134,7 @@ class _EmployeesPageState extends State<EmployeesPage> {
                           label: 'By Designation',
                           valueText: _selectedDesignationName,
                           isActive: _selectedDesignationId != null,
+                          prefixIcon: Icons.badge_outlined,
                           onTap: _pickDesignation,
                           onClear: _selectedDesignationId != null
                               ? () {
@@ -847,6 +1152,7 @@ class _EmployeesPageState extends State<EmployeesPage> {
                           label: 'By Team',
                           valueText: _selectedTeamName,
                           isActive: _selectedTeamId != null,
+                          prefixIcon: Icons.groups_outlined,
                           onTap: _pickTeam,
                           onClear: _selectedTeamId != null
                               ? () {
@@ -864,6 +1170,7 @@ class _EmployeesPageState extends State<EmployeesPage> {
                           label: 'By Status',
                           valueText: _selectedStatus == null ? null : (_selectedStatus == 'ACTIVE' ? 'Active' : 'Inactive'),
                           isActive: _selectedStatus != null,
+                          prefixIcon: Icons.verified_user_outlined,
                           onTap: _pickStatus,
                           onClear: _selectedStatus != null
                               ? () {
@@ -976,9 +1283,9 @@ class _EmployeesPageState extends State<EmployeesPage> {
             else ...[
               for (final emp in _displayEmployees) ...[
                 _buildEmployeeCard(emp),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
               ],
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               // Pagination Toolbar matching Screenshot 2
               _buildPaginationToolbar(),
             ],
@@ -1093,7 +1400,7 @@ class _EmployeesPageState extends State<EmployeesPage> {
           }
         },
         child: Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: _cardBorder),
@@ -1157,9 +1464,11 @@ class _EmployeesPageState extends State<EmployeesPage> {
                           ],
                         ),
                         if (email.isNotEmpty) ...[
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 3),
                           Text(
                             email,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(fontSize: 12, color: _soft),
                           ),
                         ],
@@ -1167,7 +1476,7 @@ class _EmployeesPageState extends State<EmployeesPage> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
                     decoration: BoxDecoration(
                       color: active ? _greenBg : const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(8),
@@ -1183,7 +1492,7 @@ class _EmployeesPageState extends State<EmployeesPage> {
                             shape: BoxShape.circle,
                           ),
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: 4.5),
                         Text(
                           active ? 'Active' : 'Inactive',
                           style: TextStyle(
@@ -1198,112 +1507,139 @@ class _EmployeesPageState extends State<EmployeesPage> {
                 ],
               ),
               const SizedBox(height: 12),
-              const Divider(height: 1),
+              const Divider(height: 1, thickness: 1, color: Color(0xFFF1EDE6)),
               const SizedBox(height: 10),
 
               // Department & Designation
               if (designation.isNotEmpty || department.isNotEmpty) ...[
                 Row(
                   children: [
-                    const Icon(Icons.business_center_outlined, size: 14, color: _soft),
-                    const SizedBox(width: 6),
+                    const Icon(Icons.business_center_outlined, size: 14.5, color: _soft),
+                    const SizedBox(width: 7),
                     Expanded(
                       child: Text(
                         [if (designation.isNotEmpty) designation, if (department.isNotEmpty) department].join(' · '),
                         style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: _ink),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
               ],
 
               // Manager & Teams
-              Row(
-                children: [
-                  if (managerName.isNotEmpty) ...[
-                    const Icon(Icons.person_outline_rounded, size: 14, color: _soft),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Manager: $managerName',
-                      style: const TextStyle(fontSize: 12, color: _soft, fontWeight: FontWeight.w500),
-                    ),
-                    const SizedBox(width: 10),
-                  ],
-                  if (firstTeam.isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1EDE6),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        firstTeam,
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _ink),
-                      ),
-                    ),
-                  const Spacer(),
-                  if (widget.api.canAddEmployee) ...[
-                    InkWell(
-                      onTap: () async {
-                        final res = await Navigator.push<dynamic>(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => AddEmployeePage(
-                              api: widget.api,
-                              employeeToEdit: person,
-                              initialDepartments: _departments,
-                              initialDesignations: _designations,
-                              initialTeams: _teams,
-                              initialManagers: _managers,
-                            ),
-                          ),
-                        );
-                        if (res != null && mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Employee updated successfully.'),
-                              backgroundColor: Color(0xFF16A34A),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                          _loadEmployees();
-                        }
-                      },
-                      borderRadius: BorderRadius.circular(6),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF9F5),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: const Color(0xFFF3D5C8)),
+              if (managerName.isNotEmpty || firstTeam.isNotEmpty) ...[
+                Row(
+                  children: [
+                    if (managerName.isNotEmpty) ...[
+                      const Icon(Icons.person_outline_rounded, size: 14.5, color: _soft),
+                      const SizedBox(width: 7),
+                      Expanded(
+                        child: Text(
+                          'Manager: $managerName',
+                          style: const TextStyle(fontSize: 12, color: _soft, fontWeight: FontWeight.w500),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.edit_outlined, size: 13, color: _taskBrown),
-                            SizedBox(width: 4),
-                            Text(
-                              'Edit',
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w700,
-                                color: _taskBrown,
+                      ),
+                    ] else
+                      const Spacer(),
+                    if (firstTeam.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1EDE6),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          firstTeam,
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _ink),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 10),
+              ],
+
+              // Footer: Joined date + Edit action
+              if (joined.isNotEmpty || widget.api.canAddEmployee) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    if (joined.isNotEmpty)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.calendar_today_outlined, size: 12, color: _soft),
+                          const SizedBox(width: 5),
+                          Text(
+                            joined,
+                            style: const TextStyle(fontSize: 11.5, color: _soft, fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      )
+                    else
+                      const SizedBox.shrink(),
+                    if (widget.api.canAddEmployee)
+                      InkWell(
+                        onTap: () async {
+                          final res = await Navigator.push<dynamic>(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => AddEmployeePage(
+                                api: widget.api,
+                                employeeToEdit: person,
+                                initialDepartments: _departments,
+                                initialDesignations: _designations,
+                                initialTeams: _teams,
+                                initialManagers: _managers,
                               ),
                             ),
-                          ],
+                          );
+                          if (res != null && mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Employee updated successfully.'),
+                                backgroundColor: Color(0xFF16A34A),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                            _loadEmployees();
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(6),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF9F5),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFFF3D5C8)),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.edit_outlined, size: 13, color: _taskBrown),
+                              SizedBox(width: 4),
+                              Text(
+                                'Edit',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: _taskBrown,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
                   ],
-                  if (joined.isNotEmpty)
-                    Text(
-                      joined,
-                      style: const TextStyle(fontSize: 11.5, color: _soft),
-                    ),
-                ],
-              ),
+                ),
+              ],
             ],
           ),
         ),

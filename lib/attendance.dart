@@ -282,8 +282,13 @@ class _AttendancePageState extends State<AttendancePage> {
       child: RefreshIndicator(
         onRefresh: load,
         child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
-        children: [
+          padding: EdgeInsets.fromLTRB(
+            responsiveHorizontalPadding(context, mobilePadding: 16),
+            8,
+            responsiveHorizontalPadding(context, mobilePadding: 16),
+            28,
+          ),
+          children: [
           Row(
             children: [
               Expanded(

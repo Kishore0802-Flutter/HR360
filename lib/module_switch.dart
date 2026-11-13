@@ -34,11 +34,11 @@ class ModuleSwitch extends StatelessWidget {
   Widget build(BuildContext context) {
     final tasks = module == AppModule.tasks;
     return Container(
-      height: 58,
-      padding: const EdgeInsets.all(4),
+      height: 64,
+      padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(28),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: const [
           BoxShadow(
@@ -60,7 +60,7 @@ class ModuleSwitch extends StatelessWidget {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 350),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(22),
+                  borderRadius: BorderRadius.circular(23),
                   gradient: LinearGradient(
                     colors: module.gradient,
                     begin: Alignment.topLeft,
@@ -115,18 +115,18 @@ class _Half extends StatelessWidget {
       selected: selected,
       label: '${module.title} workspace',
       child: InkWell(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(23),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           child: Row(
             children: [
               Icon(
                 module.icon,
-                size: 21,
+                size: 22,
                 color: selected ? Colors.white : const Color(0xFF0F172A),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Expanded(
                 child: AnimatedDefaultTextStyle(
                   duration: const Duration(milliseconds: 250),
@@ -139,19 +139,20 @@ class _Half extends StatelessWidget {
                         module.title,
                         maxLines: 1,
                         style: const TextStyle(
-                          fontSize: 13.5,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+                      const SizedBox(height: 2),
                       Text(
                         module.subtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: FontWeight.w400,
                           color: selected
-                              ? Colors.white.withValues(alpha: 0.8)
+                              ? Colors.white.withValues(alpha: 0.85)
                               : const Color(0xFF64748B),
                         ),
                       ),

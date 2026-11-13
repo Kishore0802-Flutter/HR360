@@ -451,7 +451,12 @@ class _RequestsPageState extends State<RequestsPage> {
               : RefreshIndicator(
                   onRefresh: load,
                   child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                    padding: EdgeInsets.fromLTRB(
+                      responsiveHorizontalPadding(context, mobilePadding: 16),
+                      0,
+                      responsiveHorizontalPadding(context, mobilePadding: 16),
+                      24,
+                    ),
                     children: [
                       if (rows.isEmpty)
                         const EmptyView(
@@ -567,7 +572,9 @@ class _RequestsPageState extends State<RequestsPage> {
             : RefreshIndicator(
                 onRefresh: load,
                 child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 22),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: responsiveHorizontalPadding(context, mobilePadding: 22),
+                  ),
                   children: [
                     if (rows.isEmpty)
                       const EmptyView(

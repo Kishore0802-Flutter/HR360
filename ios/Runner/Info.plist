@@ -2,10 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>HR#360</string>
+	<string>HR360</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -22,7 +24,30 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>HR360 requires camera access to capture verification selfies for attendance check-in/out and take photos of supporting documents for leave and expense requests.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>HR360 uses Face ID to provide quick and secure biometric sign-in to your workplace account.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>HR360 uses your location to verify you are within the designated workplace geo-fence when checking in or out for work attendance.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>We need your location to verify your check-in and check-out workplace attendance.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>We need your location to verify your check-in and check-out workplace attendance.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>HR360 requires permission to save attendance verification receipts and exported payslips to your photo library.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>HR360 requires photo library access to let you select and attach receipts, medical certificates, and supporting documents to leave and task requests.</string>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
@@ -30,28 +55,10 @@
 	<string>Main</string>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
-		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>UISupportedInterfaceOrientations~ipad</key>
-	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>CADisableMinimumFrameDurationOnPhone</key>
-	<true/>
-	<key>UIApplicationSupportsIndirectInputEvents</key>
-	<true/>
-<key>NSFaceIDUsageDescription</key>
-<string>Face ID signs you in to HR#360 on this device.</string>
-<key>NSCameraUsageDescription</key>
-<string>The camera captures photos for attendance selfies and document attachments.</string>
-<key>NSPhotoLibraryUsageDescription</key>
-<string>HR#360 needs access to your photos to attach documents to leave requests.</string>
-<key>NSLocationWhenInUseUsageDescription</key><string>Your location verifies that you are at your assigned office when recording attendance.</string>
-<key>NSAppTransportSecurity</key><dict><key>NSAllowsLocalNetworking</key><true/></dict>
 </dict>
 </plist>

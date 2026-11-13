@@ -37,7 +37,12 @@ class _TaskScaffold extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(18, 8, 18, 0),
+          padding: EdgeInsets.fromLTRB(
+            responsiveHorizontalPadding(context, mobilePadding: 18),
+            8,
+            responsiveHorizontalPadding(context, mobilePadding: 18),
+            0,
+          ),
           child: Row(
             children: [
               Expanded(
@@ -103,7 +108,9 @@ class _Segments extends StatelessWidget {
     height: 40,
     child: ListView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 18),
+      padding: EdgeInsets.symmetric(
+        horizontal: responsiveHorizontalPadding(context, mobilePadding: 18),
+      ),
       children: [
         for (final item in items)
           Padding(
@@ -1769,7 +1776,12 @@ class _ListState extends StatelessWidget {
       color: tasksAccent,
       onRefresh: retry,
       child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(18, 6, 18, 120),
+        padding: EdgeInsets.fromLTRB(
+          responsiveHorizontalPadding(context, mobilePadding: 18),
+          6,
+          responsiveHorizontalPadding(context, mobilePadding: 18),
+          120,
+        ),
         itemCount: rows!.isEmpty ? 1 : rows!.length,
         separatorBuilder: (_, _) => const SizedBox(height: 10),
         itemBuilder: (context, i) => rows!.isEmpty
