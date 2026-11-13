@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'api.dart';
 import 'clock_in.dart';
@@ -215,10 +216,15 @@ class _RoleDashboardState extends State<RoleDashboard> {
   }
 
   Widget _header() {
-    final now = tz.TZDateTime.now(tz.getLocation(officeTimezone));
+    DateTime now;
+    try {
+      now = tz.TZDateTime.now(tz.getLocation(officeTimezone));
+    } catch (_) {
+      now = DateTime.now();
+    }
     final mood = dashMood(now);
-    final profile = api.profile ?? const {};
-    final name = profile['name']?.toString() ?? 'Kishore Kumar S';
+    final userName = api.userName;
+    final userRole = api.userRole;
 
     const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const months = [
@@ -238,169 +244,180 @@ class _RoleDashboardState extends State<RoleDashboard> {
     final dateStr =
         '${weekdays[now.weekday - 1]}, ${now.day} ${months[now.month - 1]} ${now.year}';
 
-    return Stack(
-      clipBehavior: Clip.none,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Positioned(
-          top: -12,
-          right: -16,
-          child: IgnorePointer(
-            child: SizedBox(
-              width: 180,
-              height: 140,
-              child: ShaderMask(
-                shaderCallback: (bounds) {
-                  return const LinearGradient(
-                    begin: Alignment.centerRight,
-                    end: Alignment.bottomLeft,
-                    colors: [
-                      Colors.white,
-                      Colors.white,
-                      Colors.transparent,
-                    ],
-                    stops: [0.0, 0.60, 1.0],
-                  ).createShader(bounds);
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.calendar_month_outlined,
+                    size: 14,
+                    color: Color(0xFF64748B),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    dateStr,
+                    style: GoogleFonts.poppins(
+                      color: const Color(0xFF475569),
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Spacer(),
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x0A0F172A),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                tooltip: 'Notifications',
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => NotificationsPage(api: api),
+                    ),
+                  );
+                  load();
                 },
-                blendMode: BlendMode.dstIn,
-                child: Image.asset(
-                  'assets/dashboard_building.png',
-                  fit: BoxFit.cover,
-                  alignment: Alignment.topRight,
+                icon: Badge(
+                  isLabelVisible: unread > 0,
+                  label: Text(
+                    '$unread',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Colors.white,
+                    ),
+                  ),
+                  backgroundColor: const Color(0xFFEF4444),
+                  child: const Icon(
+                    Icons.notifications_none_rounded,
+                    color: Color(0xFF1B2A4A),
+                    size: 20,
+                  ),
                 ),
               ),
             ),
-          ),
+            const SizedBox(width: 10),
+            GestureDetector(
+              onTap: () => widget.onTab(profileTab),
+              child: CircleAvatar(
+                radius: 19,
+                backgroundColor: const Color(0xFF1B2A4A),
+                child: Text(
+                  _initials(userName),
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-        Column(
+        const SizedBox(height: 16),
+        Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.calendar_month_outlined,
-                      size: 15,
-                      color: _soft,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      dateStr,
-                      style: const TextStyle(
-                        color: Color(0xFF475569),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: _line),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x0C000000),
-                        blurRadius: 8,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: IconButton(
-                    padding: EdgeInsets.zero,
-                    tooltip: 'Notifications',
-                    onPressed: () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => NotificationsPage(api: api),
-                        ),
-                      );
-                      load();
-                    },
-                    icon: Badge(
-                      isLabelVisible: unread > 0,
-                      label: Text(
-                        '$unread',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Colors.white,
-                        ),
-                      ),
-                      backgroundColor: const Color(0xFFEF4444),
-                      child: const Icon(
-                        Icons.notifications_none_rounded,
-                        color: _ink,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                GestureDetector(
-                  onTap: () => widget.onTab(profileTab),
-                  child: CircleAvatar(
-                    radius: 19,
-                    backgroundColor: const Color(0xFF1E293B),
-                    child: Text(
-                      _initials(name),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+            Container(
+              width: 3.5,
+              height: 48,
+              margin: const EdgeInsets.only(top: 3, right: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F766E),
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-            const SizedBox(height: 14),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 3.5,
-                  height: 28,
-                  margin: const EdgeInsets.only(top: 2, right: 10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0F766E),
-                    borderRadius: BorderRadius.circular(2),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: '${mood.greeting},\n',
+                          style: GoogleFonts.poppins(
+                            color: const Color(0xFF1B2A4A),
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.3,
+                            height: 1.15,
+                          ),
+                        ),
+                        TextSpan(
+                          text: userName,
+                          style: GoogleFonts.poppins(
+                            color: const Color(0xFF64748B),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(height: 6),
+                  Row(
                     children: [
-                      Text(
-                        '${mood.greeting},',
-                        style: const TextStyle(
-                          color: _ink,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: -0.3,
-                          height: 1.15,
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8F5E9),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFFC8E6C9)),
+                        ),
+                        child: Text(
+                          userRole,
+                          style: GoogleFonts.poppins(
+                            color: const Color(0xFF1B5E20),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: _soft,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          "Here's your organization overview",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                            color: const Color(0xFF8B93A7),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
@@ -446,8 +463,8 @@ class _OrganisationPulseCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: _line),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
         boxShadow: const [
           BoxShadow(
             color: Color(0x061B2A4A),
@@ -456,8 +473,9 @@ class _OrganisationPulseCard extends StatelessWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
@@ -465,12 +483,13 @@ class _OrganisationPulseCard extends StatelessWidget {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFECFDF5),
+                  color: const Color(0xFFE7F6EE),
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFC7EBD7)),
                 ),
                 child: const Icon(
-                  Icons.timeline_rounded,
-                  color: Color(0xFF059669),
+                  Icons.insights_rounded,
+                  color: Color(0xFF1B7F56),
                   size: 18,
                 ),
               ),
@@ -481,9 +500,9 @@ class _OrganisationPulseCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: _ink,
-                    fontSize: 15.5,
-                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1B2A4A),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
@@ -500,7 +519,7 @@ class _OrganisationPulseCard extends StatelessWidget {
                   painter: _PulseRingPainter(
                     ratio,
                     trackColor: const Color(0xFFF1F5F9),
-                    progressColor: const Color(0xFF10B981),
+                    progressColor: const Color(0xFF1B7F56),
                   ),
                   child: Center(
                     child: Column(
@@ -509,9 +528,9 @@ class _OrganisationPulseCard extends StatelessWidget {
                         Text(
                           '${(ratio * 100).round()}%',
                           style: const TextStyle(
-                            color: _ink,
-                            fontSize: 21,
-                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1B2A4A),
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
                             height: 1.1,
                           ),
                         ),
@@ -519,9 +538,9 @@ class _OrganisationPulseCard extends StatelessWidget {
                         const Text(
                           'Present',
                           style: TextStyle(
-                            color: _soft,
+                            color: Color(0xFF8B93A7),
                             fontSize: 11,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
@@ -535,24 +554,27 @@ class _OrganisationPulseCard extends StatelessWidget {
                   children: [
                     _metricRow(
                       icon: Icons.groups_rounded,
-                      iconColor: const Color(0xFF2563EB),
-                      iconBg: const Color(0xFFEFF6FF),
+                      iconColor: const Color(0xFF7C6BF2),
+                      bgColor: const Color(0xFFF3F0FF),
+                      borderColor: const Color(0xFFE2D9FC),
                       label: 'Total Employees',
                       value: totalEmployees,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 7),
                     _metricRow(
                       icon: Icons.person_rounded,
-                      iconColor: const Color(0xFF059669),
-                      iconBg: const Color(0xFFECFDF5),
+                      iconColor: const Color(0xFF1B7F56),
+                      bgColor: const Color(0xFFE7F6EE),
+                      borderColor: const Color(0xFFC7EBD7),
                       label: 'Present',
                       value: present,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 7),
                     _metricRow(
                       icon: Icons.error_outline_rounded,
-                      iconColor: const Color(0xFFEA580C),
-                      iconBg: const Color(0xFFFFF7ED),
+                      iconColor: const Color(0xFFBE5E38),
+                      bgColor: const Color(0xFFFDF6F0),
+                      borderColor: const Color(0xFFE8D3C5),
                       label: 'Not Checked In',
                       value: notCheckedIn,
                     ),
@@ -569,27 +591,29 @@ class _OrganisationPulseCard extends StatelessWidget {
   Widget _metricRow({
     required IconData icon,
     required Color iconColor,
-    required Color iconBg,
+    required Color bgColor,
+    required Color borderColor,
     required String label,
     required int value,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: bgColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
+        border: Border.all(color: borderColor, width: 1),
       ),
       child: Row(
         children: [
           Container(
-            width: 26,
-            height: 26,
+            width: 24,
+            height: 24,
             decoration: BoxDecoration(
-              color: iconBg,
+              color: Colors.white,
               shape: BoxShape.circle,
+              border: Border.all(color: borderColor),
             ),
-            child: Icon(icon, size: 14, color: iconColor),
+            child: Icon(icon, size: 13, color: iconColor),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -598,19 +622,19 @@ class _OrganisationPulseCard extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                color: _soft,
-                fontSize: 11.5,
-                fontWeight: FontWeight.w500,
+                color: Color(0xFF1B2A4A),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
           const SizedBox(width: 6),
           Text(
             '$value',
-            style: const TextStyle(
-              color: _ink,
+            style: TextStyle(
+              color: iconColor,
               fontSize: 14,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ],
@@ -655,8 +679,8 @@ class _MyDayCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: _line),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
         boxShadow: const [
           BoxShadow(
             color: Color(0x061B2A4A),
@@ -670,40 +694,55 @@ class _MyDayCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.fingerprint_rounded,
-                size: 22,
-                color: _ink,
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'My Day',
-                style: TextStyle(
-                  color: _ink,
-                  fontSize: 15.5,
-                  fontWeight: FontWeight.w600,
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEAF1FF),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFCFE0FC)),
+                ),
+                child: const Icon(
+                  Icons.fingerprint_rounded,
+                  color: Color(0xFF3B82F6),
+                  size: 18,
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'My Day',
+                  style: TextStyle(
+                    color: Color(0xFF1B2A4A),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: isLate
-                      ? const Color(0xFFFEF3C7)
+                      ? const Color(0xFFFDF6F0)
                       : const Color(0xFFE7F6EE),
                   borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isLate
+                        ? const Color(0xFFE8D3C5)
+                        : const Color(0xFFC7EBD7),
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
                       isLate
-                          ? Icons.access_time_rounded
+                          ? Icons.schedule_rounded
                           : Icons.check_circle_rounded,
                       size: 13,
                       color: isLate
-                          ? const Color(0xFFD97706)
+                          ? const Color(0xFFBE5E38)
                           : const Color(0xFF1B7F56),
                     ),
                     const SizedBox(width: 4),
@@ -711,10 +750,10 @@ class _MyDayCard extends StatelessWidget {
                       isLate ? 'Late (${_hm(lateMinutes)})' : 'On Time',
                       style: TextStyle(
                         color: isLate
-                            ? const Color(0xFFD97706)
+                            ? const Color(0xFFBE5E38)
                             : const Color(0xFF1B7F56),
                         fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ],
@@ -722,139 +761,44 @@ class _MyDayCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           Row(
             children: [
               Expanded(
-                child: Row(
-                  children: [
-                    const CircleAvatar(
-                      radius: 14,
-                      backgroundColor: Color(0xFFDCFCE7),
-                      child: Icon(
-                        Icons.check_rounded,
-                        size: 15,
-                        color: Color(0xFF16A34A),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Checked In',
-                            style: TextStyle(
-                              color: _soft,
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                          Text(
-                            checkInStr,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: _ink,
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                child: _dayStatBox(
+                  label: 'Checked In',
+                  value: checkInStr,
+                  icon: Icons.check_rounded,
+                  color: const Color(0xFF1B7F56),
+                  bgColor: const Color(0xFFE7F6EE),
+                  borderColor: const Color(0xFFC7EBD7),
                 ),
               ),
-              Container(width: 1, height: 32, color: _line),
               const SizedBox(width: 8),
               Expanded(
-                child: Row(
-                  children: [
-                    const CircleAvatar(
-                      radius: 14,
-                      backgroundColor: Color(0xFFF1F5F9),
-                      child: Icon(
-                        Icons.access_time_rounded,
-                        size: 15,
-                        color: _soft,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Check Out',
-                            style: TextStyle(
-                              color: _soft,
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                          Text(
-                            checkOutStr,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: _ink,
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                child: _dayStatBox(
+                  label: 'Check Out',
+                  value: checkOutStr,
+                  icon: Icons.schedule_rounded,
+                  color: const Color(0xFF3B82F6),
+                  bgColor: const Color(0xFFEAF1FF),
+                  borderColor: const Color(0xFFCFE0FC),
                 ),
               ),
-              Container(width: 1, height: 32, color: _line),
               const SizedBox(width: 8),
               Expanded(
-                child: Row(
-                  children: [
-                    const CircleAvatar(
-                      radius: 14,
-                      backgroundColor: Color(0xFFF1F5F9),
-                      child: Icon(
-                        Icons.timer_outlined,
-                        size: 15,
-                        color: _soft,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Total Hours',
-                            style: TextStyle(
-                              color: _soft,
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                          Text(
-                            totalHoursStr,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: _ink,
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                child: _dayStatBox(
+                  label: 'Total Hours',
+                  value: totalHoursStr,
+                  icon: Icons.timer_outlined,
+                  color: const Color(0xFF7C6BF2),
+                  bgColor: const Color(0xFFF3F0FF),
+                  borderColor: const Color(0xFFE2D9FC),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           Row(
             children: [
               Expanded(
@@ -864,14 +808,14 @@ class _MyDayCard extends StatelessWidget {
                     onPressed: onPunch,
                     icon: const Icon(
                       Icons.fingerprint_rounded,
-                      size: 19,
+                      size: 18,
                       color: Colors.white,
                     ),
                     label: Text(
                       open ? 'Check Out' : 'Check In',
                       style: const TextStyle(
                         fontSize: 13.5,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                         color: Colors.white,
                       ),
                     ),
@@ -879,13 +823,13 @@ class _MyDayCard extends StatelessWidget {
                       backgroundColor: _forestDark,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: SizedBox(
                   height: 44,
@@ -893,27 +837,83 @@ class _MyDayCard extends StatelessWidget {
                     onPressed: onViewDetails,
                     icon: const Icon(
                       Icons.access_time_rounded,
-                      size: 17,
-                      color: _ink,
+                      size: 16,
+                      color: Color(0xFF1B2A4A),
                     ),
                     label: const Text(
                       'View Details',
                       style: TextStyle(
                         fontSize: 13.5,
-                        fontWeight: FontWeight.w600,
-                        color: _ink,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1B2A4A),
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFFCBD5E1)),
+                      backgroundColor: Colors.white,
+                      side: const BorderSide(
+                        color: Color(0xFFCBD5E1),
+                        width: 1.2,
+                      ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                   ),
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _dayStatBox({
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color color,
+    required Color bgColor,
+    required Color borderColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: borderColor, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 12, color: color),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF8B93A7),
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 3),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Color(0xFF1B2A4A),
+              fontSize: 12.5,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ],
       ),
@@ -938,21 +938,23 @@ class _ActionCards extends StatelessWidget {
       String title,
       int count,
       IconData icon,
-      Color color,
+      Color accentColor,
+      Color bgColor,
+      Color borderColor,
       VoidCallback? onTap,
     ) =>
         Expanded(
           child: Material(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            color: bgColor,
+            borderRadius: BorderRadius.circular(16),
             child: InkWell(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(16),
               onTap: onTap,
               child: Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: _line),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: borderColor, width: 1.2),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -960,19 +962,19 @@ class _ActionCards extends StatelessWidget {
                     Row(
                       children: [
                         Container(
-                          width: 36,
-                          height: 36,
+                          width: 34,
+                          height: 34,
                           decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(12),
+                            color: accentColor,
+                            shape: BoxShape.circle,
                           ),
-                          child: Icon(icon, size: 19, color: color),
+                          child: Icon(icon, size: 17, color: Colors.white),
                         ),
                         const Spacer(),
-                        const Icon(
+                        Icon(
                           Icons.arrow_forward_rounded,
-                          size: 18,
-                          color: _soft,
+                          size: 16,
+                          color: accentColor,
                         ),
                       ],
                     ),
@@ -980,14 +982,18 @@ class _ActionCards extends StatelessWidget {
                     Text(
                       '$count',
                       style: const TextStyle(
-                        color: _ink,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 22,
+                        color: Color(0xFF1B2A4A),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 24,
                       ),
                     ),
                     Text(
                       title,
-                      style: const TextStyle(color: _soft, fontSize: 11.5),
+                      style: const TextStyle(
+                        color: Color(0xFF8B93A7),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
@@ -995,15 +1001,16 @@ class _ActionCards extends StatelessWidget {
             ),
           ),
         );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
           'Needs your action',
           style: TextStyle(
-            color: _ink,
-            fontSize: 15.5,
-            fontWeight: FontWeight.w700,
+            color: Color(0xFF1B2A4A),
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
           ),
         ),
         const SizedBox(height: 10),
@@ -1013,7 +1020,9 @@ class _ActionCards extends StatelessWidget {
               'Leave requests',
               leave,
               Icons.beach_access_outlined,
-              const Color(0xFF7A5CE0),
+              const Color(0xFF7C6BF2),
+              const Color(0xFFF3F0FF),
+              const Color(0xFFE2D9FC),
               onLeaveReview,
             ),
             const SizedBox(width: 10),
@@ -1021,7 +1030,9 @@ class _ActionCards extends StatelessWidget {
               'Regularisations',
               regularisation,
               Icons.edit_calendar_outlined,
-              const Color(0xFFE59A2F),
+              const Color(0xFFBE5E38),
+              const Color(0xFFFDF6F0),
+              const Color(0xFFE8D3C5),
               onRegularisationReview,
             ),
           ],

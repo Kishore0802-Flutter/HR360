@@ -1,26 +1,30 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 enum AppModule { hrms, tasks }
 
-const tasksAccent = Color(0xFFC2570C);
+const tasksAccent = Color(0xFFBE5E38);
 
 extension AppModuleStyle on AppModule {
-  Color get accent => this == AppModule.hrms ? const Color(0xFF0C3831) : tasksAccent;
+  Color get accent => this == AppModule.hrms ? const Color(0xFF1B7F56) : tasksAccent;
   Color get soft => this == AppModule.hrms
-      ? const Color(0xFFE2E8F0)
-      : const Color(0xFFFCE9DA);
+      ? const Color(0xFFE7F6EE)
+      : const Color(0xFFFDF6F0);
+  Color get border => this == AppModule.hrms
+      ? const Color(0xFFC7EBD7)
+      : const Color(0xFFE8D3C5);
   List<Color> get gradient => this == AppModule.hrms
-      ? const [Color(0xFF0C3831), Color(0xFF0F473E)]
-      : const [Color(0xFFC2570C), Color(0xFFEB8A3C)];
+      ? const [Color(0xFF0C3831), Color(0xFF1B7F56)]
+      : const [Color(0xFFBE5E38), Color(0xFFD97706)];
   String get title => this == AppModule.hrms ? 'HRMS' : 'Tasks';
   String get subtitle =>
       this == AppModule.hrms ? 'People & Attendance' : 'Work & Issues';
   IconData get icon =>
-      this == AppModule.hrms ? Icons.groups_rounded : Icons.check_box_outlined;
+      this == AppModule.hrms ? Icons.groups_rounded : Icons.checklist_rounded;
 }
 
-/// Full-width workspace dock: two halves with a sliding gradient thumb.
+/// Modern segmented module dock: clean rounded container with elevated active card
 class ModuleSwitch extends StatelessWidget {
   final AppModule module;
   final ValueChanged<AppModule> onChanged;
@@ -33,44 +37,35 @@ class ModuleSwitch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tasks = module == AppModule.tasks;
+    final activeBg = tasks ? const Color(0xFFBE5E38) : const Color(0xFF0C3831);
     return Container(
-      height: 64,
-      padding: const EdgeInsets.all(5),
+      height: 56,
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A1B2A4A),
-            blurRadius: 14,
-            offset: Offset(0, 4),
-          ),
-        ],
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
       ),
       child: Stack(
         children: [
           AnimatedAlign(
-            duration: const Duration(milliseconds: 350),
+            duration: const Duration(milliseconds: 280),
             curve: Curves.easeOutCubic,
             alignment: tasks ? Alignment.centerRight : Alignment.centerLeft,
             child: FractionallySizedBox(
               widthFactor: 0.5,
               heightFactor: 1,
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 350),
+                duration: const Duration(milliseconds: 280),
+                curve: Curves.easeOutCubic,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(23),
-                  gradient: LinearGradient(
-                    colors: module.gradient,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  boxShadow: [
+                  color: activeBg,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: const [
                     BoxShadow(
-                      color: module.accent.withValues(alpha: 0.28),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
+                      color: Color(0x1F000000),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
                     ),
                   ],
                 ),
@@ -109,55 +104,62 @@ class _Half extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fg = selected ? Colors.white : const Color(0xFF0F172A);
     return Semantics(
       button: true,
       selected: selected,
       label: '${module.title} workspace',
       child: InkWell(
-        borderRadius: BorderRadius.circular(23),
+        borderRadius: BorderRadius.circular(12),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           child: Row(
             children: [
-              Icon(
-                module.icon,
-                size: 22,
-                color: selected ? Colors.white : const Color(0xFF0F172A),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: selected
+                      ? Colors.white.withValues(alpha: 0.16)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  module.icon,
+                  size: 18,
+                  color: selected ? Colors.white : const Color(0xFF64748B),
+                ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Expanded(
-                child: AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 250),
-                  style: TextStyle(color: fg),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        module.title,
-                        maxLines: 1,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      module.title,
+                      maxLines: 1,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13.5,
+                        fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                        color: selected ? Colors.white : const Color(0xFF334155),
+                        letterSpacing: -0.2,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        module.subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w400,
-                          color: selected
-                              ? Colors.white.withValues(alpha: 0.85)
-                              : const Color(0xFF64748B),
-                        ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      module.subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.poppins(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                        color: selected
+                            ? const Color(0xD9FFFFFF)
+                            : const Color(0xFF94A3B8),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ],

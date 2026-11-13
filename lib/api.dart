@@ -142,6 +142,50 @@ class Api extends ChangeNotifier {
   bool get canAddEmployee =>
       isSuperAdmin || isAdmin || permissions.contains('employees:create');
 
+  /// Full real name of the current user from profile/employee data.
+  String get userName {
+    final p = profile ?? const {};
+    var name = p['name']?.toString() ?? '';
+    if (name.isEmpty && p['employee'] is Map) {
+      final emp = p['employee'] as Map;
+      final first = emp['firstName']?.toString() ?? '';
+      final last = emp['lastName']?.toString() ?? '';
+      name = '$first $last'.trim();
+    }
+    if (name.isEmpty) {
+      name = p['fullName']?.toString() ?? '';
+    }
+    return name.isNotEmpty ? name : 'System Administrator';
+  }
+
+  /// Real role display title of the current user (e.g. 'Super Admin').
+  String get userRole {
+    final p = profile ?? const {};
+    if (p['roles'] is List && (p['roles'] as List).isNotEmpty) {
+      for (final r in p['roles'] as List) {
+        if (r is Map) {
+          final code = r['code']?.toString().toUpperCase();
+          final rName = r['name']?.toString();
+          if (code == 'SUPER_ADMIN' || rName?.toLowerCase() == 'super admin') {
+            return 'Super Admin';
+          }
+          if (rName != null && rName.isNotEmpty) {
+            return rName;
+          }
+        }
+      }
+    }
+    final roleName = p['role_name']?.toString() ?? '';
+    if (roleName.isNotEmpty) return roleName;
+    if (isSuperAdmin || p['is_super_admin'] == true) return 'Super Admin';
+    final r = (role ?? p['role'] ?? '').toString().toLowerCase();
+    if (r == 'admin') return 'Super Admin';
+    if (r == 'manager') return 'Manager';
+    if (r == 'hr') return 'HR Manager';
+    if (r.isNotEmpty) return r[0].toUpperCase() + r.substring(1);
+    return 'Super Admin';
+  }
+
   /// Applies `user` from `/auth/login`, `/auth/refresh`, or `/auth/me`.
   void applyUser(Json session) {
     role = session['role'] as String?;

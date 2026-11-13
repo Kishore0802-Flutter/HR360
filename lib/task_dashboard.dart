@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:timezone/timezone.dart' as tz;
 import 'all_tasks.dart';
 import 'api.dart';
 import 'create_task.dart';
 import 'design.dart';
 import 'projects.dart';
+import 'requests.dart';
 import 'scheduled_tasks.dart';
+import 'shell.dart' show dashMood;
 import 'tasks.dart';
 
 enum TaskGrain { day, week, month }
@@ -286,10 +290,14 @@ class _TaskDashboardState extends State<TaskDashboard> {
             120,
           ),
           children: [
+            // Top unified executive app bar
+            _buildTopBar(),
+            const SizedBox(height: 14),
+
             // Top module switcher if provided
             if (widget.moduleSwitch != null) ...[
               widget.moduleSwitch!,
-              const SizedBox(height: 18),
+              const SizedBox(height: 16),
             ],
 
             // ── Header Section ──────────────────────────────────────────
@@ -314,64 +322,113 @@ class _TaskDashboardState extends State<TaskDashboard> {
     );
   }
 
-  // ── Header ─────────────────────────────────────────────────────────────
-  Widget _buildHeader(String scope, DateTime from, DateTime to) {
+  // ── Top Bar (Shared Executive Header) ───────────────────────────────────
+  Widget _buildTopBar() {
+    DateTime now;
+    try {
+      now = tz.TZDateTime.now(tz.getLocation(officeTimezone));
+    } catch (_) {
+      now = DateTime.now();
+    }
+    final mood = dashMood(now);
+    final userName = api.userName;
+    final userRole = api.userRole;
+
+    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    final dateStr =
+        '${weekdays[now.weekday - 1]}, ${now.day} ${months[now.month - 1]} ${now.year}';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    'Task dashboard',
-                    style: TextStyle(
-                      color: _ink,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.4,
-                    ),
+                  const Icon(
+                    Icons.calendar_month_outlined,
+                    size: 14,
+                    color: Color(0xFF64748B),
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(width: 6),
                   Text(
-                    '$scope · trend ${_formatDay(from)} – ${_formatDay(to)}',
-                    style: const TextStyle(
-                      color: _soft,
+                    dateStr,
+                    style: GoogleFonts.poppins(
+                      color: const Color(0xFF475569),
                       fontSize: 12.5,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
             ),
-            IconButton(
-              tooltip: 'Filters',
-              onPressed: () => _openFiltersBottomSheet(context, from, to),
-              icon: Badge(
-                isLabelVisible: _hasActiveFilters,
-                smallSize: 8,
-                backgroundColor: _taskBrown,
-                child: const Icon(Icons.tune_rounded, color: _ink, size: 21),
+            const Spacer(),
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x0A0F172A),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
               ),
-              style: IconButton.styleFrom(
-                backgroundColor: Colors.white,
-                side: const BorderSide(color: Color(0xFFD0D7DE)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.all(9),
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                tooltip: 'Notifications',
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => NotificationsPage(api: api),
+                    ),
+                  );
+                  load();
+                },
+                icon: const Icon(
+                  Icons.notifications_none_rounded,
+                  color: Color(0xFF1B2A4A),
+                  size: 20,
+                ),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             GestureDetector(
               onTap: () => widget.onTab(widget.profileTab),
               child: CircleAvatar(
                 radius: 19,
-                backgroundColor: const Color(0xFFFCE9DA),
+                backgroundColor: const Color(0xFF1B2A4A),
                 child: Text(
-                  _userInitials(api.profile?['name']?.toString() ?? ''),
-                  style: const TextStyle(
-                    color: _taskBrown,
+                  _userInitials(userName),
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
                     fontWeight: FontWeight.w700,
                     fontSize: 13,
                   ),
@@ -380,78 +437,249 @@ class _TaskDashboardState extends State<TaskDashboard> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        // Action buttons: [ My tasks ], [ All tasks icon ], and [ + Create task ]
+        const SizedBox(height: 16),
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => widget.onTab(1),
-                icon: const Icon(Icons.checklist_rounded, size: 17),
-                label: const Text(
-                  'My tasks',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: _ink,
-                  side: const BorderSide(color: Color(0xFFD0D7DE)),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+            Container(
+              width: 3.5,
+              height: 48,
+              margin: const EdgeInsets.only(top: 3, right: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFBE5E38),
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(width: 8),
-            IconButton(
-              tooltip: 'All tasks',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => AllTasksPage(api: api),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.list_alt_rounded, color: _taskBrown, size: 20),
-              style: IconButton.styleFrom(
-                side: const BorderSide(color: Color(0xFFD0D7DE)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.all(11),
-              ),
-            ),
-            const SizedBox(width: 8),
             Expanded(
-              child: FilledButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => CreateTaskPage(
-                        api: api,
-                        onCreated: load,
-                      ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: '${mood.greeting},\n',
+                          style: GoogleFonts.poppins(
+                            color: const Color(0xFF1B2A4A),
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.3,
+                            height: 1.15,
+                          ),
+                        ),
+                        TextSpan(
+                          text: userName,
+                          style: GoogleFonts.poppins(
+                            color: const Color(0xFF64748B),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
                     ),
-                  );
-                },
-                icon: const Icon(Icons.add_rounded, size: 18),
-                label: const Text(
-                  'Create task',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: _taskBrown,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
                   ),
-                ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFDF6F0),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFFE8D3C5)),
+                        ),
+                        child: Text(
+                          userRole,
+                          style: GoogleFonts.poppins(
+                            color: const Color(0xFFBE5E38),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        "Here's your organization overview",
+                        style: GoogleFonts.poppins(
+                          color: const Color(0xFF8B93A7),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],
         ),
       ],
+    );
+  }
+
+  // ── Header ─────────────────────────────────────────────────────────────
+  Widget _buildHeader(String scope, DateTime from, DateTime to) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x060F172A),
+            blurRadius: 14,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFDF6F0),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFE8D3C5)),
+                ),
+                child: const Icon(
+                  Icons.task_alt_rounded,
+                  color: Color(0xFFBE5E38),
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Task dashboard',
+                      style: GoogleFonts.poppins(
+                        color: const Color(0xFF1B2A4A),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '$scope · trend ${_formatDay(from)} – ${_formatDay(to)}',
+                      style: GoogleFonts.poppins(
+                        color: const Color(0xFF8B93A7),
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                tooltip: 'Filters',
+                onPressed: () => _openFiltersBottomSheet(context, from, to),
+                icon: Badge(
+                  isLabelVisible: _hasActiveFilters,
+                  smallSize: 8,
+                  backgroundColor: _taskBrown,
+                  child: const Icon(Icons.tune_rounded, color: Color(0xFF1B2A4A), size: 19),
+                ),
+                style: IconButton.styleFrom(
+                  backgroundColor: const Color(0xFFF8FAFC),
+                  side: const BorderSide(color: Color(0xFFE2E8F0)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: const EdgeInsets.all(8),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          // Action buttons: [ My tasks ], [ All tasks icon ], and [ + Create task ]
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => widget.onTab(1),
+                  icon: const Icon(Icons.checklist_rounded, size: 17),
+                  label: Text(
+                    'My tasks',
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 13),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF1B2A4A),
+                    backgroundColor: const Color(0xFFF8FAFC),
+                    side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.2),
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                tooltip: 'All tasks',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AllTasksPage(api: api),
+                    ),
+                  );
+                },
+                icon: const Icon(
+                  Icons.list_alt_rounded,
+                  color: Color(0xFFBE5E38),
+                  size: 20,
+                ),
+                style: IconButton.styleFrom(
+                  backgroundColor: const Color(0xFFFDF6F0),
+                  side: const BorderSide(color: Color(0xFFE8D3C5)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.all(10),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => CreateTaskPage(
+                          api: api,
+                          onCreated: load,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: Text(
+                    'Create task',
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 13),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFBE5E38),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
